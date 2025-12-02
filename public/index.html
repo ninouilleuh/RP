@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>BLEACH RP – Fiches Joueurs</title>
+<style>
+body{
+  font-family:"Segoe UI",Roboto,Arial,sans-serif;
+  background:#0b0b0b;
+  color:#eee;
+  margin:0;
+}
+header{
+  background:#181818;
+  padding:10px 15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 2px 5px rgba(0,0,0,0.6);
+}
+h1{margin:0;font-size:19px;letter-spacing:1px;}
+select,button,input,textarea{
+  background:#222;
+  color:#fff;
+  border:none;
+  padding:6px 8px;
+  border-radius:5px;
+  font-size:0.95rem;
+}
+button{
+  cursor:pointer;
+  transition:background 0.3s,transform 0.1s;
+}
+button:hover{background:#333;}
+button:active{transform:scale(0.97);}
+#container{
+  padding:20px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:20px;
+  justify-content:center;
+}
+.card{
+  background:#151515;
+  border:1px solid #333;
+  border-radius:10px;
+  padding:15px;
+  width:260px;
+  transition:transform 0.2s;
+}
+.card:hover{transform:translateY(-2px);}
+.name{font-weight:600;font-size:1.2em;color:#58a6ff;}
+.species{font-style:italic;color:#999;margin-bottom:5px;}
+.stats ul{padding-left:20px;margin:0;}
+.btn{
+  margin-top:6px;
+  background:#2f2f2f;
+  padding:4px 6px;
+  border-radius:5px;
+  font-size:0.85rem;
+}
+.btn:hover{background:#3d3d3d;}
+.modal{
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.8);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
+}
+.modal-content{
+  background:#131313;
+  border:1px solid #333;
+  border-radius:12px;
+  padding:25px 30px;
+  width:95%;
+  max-width:700px;
+  max-height:90%;
+  overflow-y:auto;
+  box-shadow:0 0 25px rgba(0,0,0,0.8);
+}
+.close{
+  position:absolute;
+  right:25px;
+  top:10px;
+  cursor:pointer;
+  color:#f33;
+  font-size:22px;
+}
+.form-title{
+  text-align:center;
+  font-size:1.5em;
+  color:#fff;
+  border-bottom:1px solid #333;
+  padding-bottom:10px;
+  margin:0 0 20px 0;
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
+}
+.block{
+  display:flex;
+  flex-direction:column;
+}
+.block label{
+  font-weight:600;
+  font-size:0.9rem;
+  margin-bottom:6px;
+  color:#ccc;
+}
+.block input,
+.block select,
+.block textarea{
+  background:#1f1f1f;
+  border:1px solid #333;
+  border-radius:6px;
+  padding:8px;
+  color:#eee;
+  transition:border 0.3s;
+}
+.block input:focus,
+.block textarea:focus,
+.block select:focus{
+  outline:none;
+  border-color:#58a6ff;
+}
+.block textarea{min-height:70px;resize:vertical;}
+.block select[multiple]{height:110px;}
+button.confirm{
+  margin-top:25px;
+  width:100%;
+  background:#0078ff;
+  border:none;
+  color:#fff;
+  padding:10px;
+  border-radius:8px;
+  font-weight:600;
+  font-size:1rem;
+  letter-spacing:0.5px;
+  cursor:pointer;
+  transition:background .3s;
+}
+button.confirm:hover{background:#0099ff;}
+/* Barre latérale gauche */
+#sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 90px;
+  height: calc(100% - 60px);
+  background: #111;
+  border-right: 1px solid #222;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+}
+#sidebar button {
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+  padding: 10px 5px;
+  width: 80%;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+#sidebar button:hover { background: #2d2d2d; }
+
+/* Adaptation du conteneur principal pour ne pas être caché */
+#container { margin-left: 100px; }
+
+#bestiaireList h3 {
+  border-left:4px solid #ffcc66;
+  padding-left:8px;
+  margin-bottom:6px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+#detailContent p{
+  margin:8px 0;
+  line-height:1.4em;
+}
+#detailContent ul{
+  margin:5px 0 5px 15px;
+}
+#detailContent details{
+  margin-top:10px;
+  background:#1a1a1a;
+  border:1px solid #333;
+  border-radius:6px;
+  padding:6px 10px;
+}
+
+/* --- TCHAT VISUEL --- */
+#chatSection{
+  margin:20px auto 40px;
+  width:90%;
+  max-width:800px;
+  background:#151515;
+  border:1px solid #333;
+  border-radius:10px;
+  padding:15px 20px;
+  box-shadow:0 0 10px rgba(0,0,0,0.6);
+}
+#chatWindow{
+  background:#101010;
+  border:1px solid #333;
+  border-radius:6px;
+  height:300px;
+  overflow-y:auto;
+  padding:10px;
+}
+.msg{
+  margin:6px 0;
+  padding:6px 10px;
+  border-radius:6px;
+  max-width:85%;
+  line-height:1.3em;
+}
+.msg.joueur{
+  background:#222;
+  border-left:3px solid #58a6ff;
+  margin-left:auto;
+}
+.msg.narrateur{
+  background:#1a1a1a;
+  border-left:3px solid #ffcc66;
+  margin-right:auto;
+}
+#chatControls{
+  display:flex;
+  gap:5px;
+  margin-top:10px;
+}
+#chatControls input{
+  flex:1;
+  background:#222;
+  border:1px solid #333;
+  border-radius:6px;
+  padding:8px;
+  color:#fff;
+}
+#chatControls button{
+  background:#333;
+  border:none;
+  color:#fff;
+  padding:8px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+#chatControls button:hover{background:#444;}
+
+/* --- NIVEAU ET STATS --- */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.level-badge {
+  background: linear-gradient(135deg, #ffcc66, #ff9900);
+  color: #000;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.85em;
+}
+
+.xp-bar {
+  background: #222;
+  border-radius: 8px;
+  height: 18px;
+  margin: 8px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.xp-fill {
+  background: linear-gradient(90deg, #58a6ff, #00ccff);
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.xp-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75em;
+  color: #fff;
+  text-shadow: 1px 1px 2px #000;
+}
+
+.stats-grid {
+  margin-top: 10px;
+  padding: 10px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+  gap: 8px;
+}
+
+.stat-name {
+  width: 70px;
+  font-size: 0.8em;
+  color: #aaa;
+}
+
+.stat-bar {
+  flex: 1;
+  background: #333;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stat-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.stat-value {
+  width: 25px;
+  text-align: right;
+  font-size: 0.85em;
+  color: #58a6ff;
+  font-weight: bold;
+}
+
+.card-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.card-buttons .btn {
+  flex: 1;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* --- STATS RELATIVES --- */
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #333;
+}
+
+.stats-header span:first-child {
+  font-weight: bold;
+  color: #58a6ff;
+}
+
+.max-indicator {
+  font-size: 0.75em;
+  color: #ffd700;
+  background: #2a2a00;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.stat-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease, background 0.3s;
+  box-shadow: 0 0 5px rgba(255,255,255,0.2);
+}
+
+/* Animation au survol */
+.stat-item:hover .stat-fill {
+  filter: brightness(1.2);
+}
+
+.stat-item:hover .stat-value {
+  transform: scale(1.1);
+  color: #ffd700;
+}
+
+.stat-value {
+  transition: transform 0.2s, color 0.2s;
+}
+
+/* --- INVENTAIRE --- */
+.inv-list {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.inv-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: #222;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+}
+
+.inv-item:hover {
+  background: #2a2a2a;
+}
+
+.inv-item-name {
+  flex: 1;
+  color: #eee;
+}
+
+.inv-item-qty {
+  background: #58a6ff;
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.85em;
+  font-weight: bold;
+  margin: 0 10px;
+}
+
+.inv-item-actions button {
+  background: #333;
+  border: none;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 4px;
+  font-size: 0.85em;
+}
+
+.inv-item-actions button:hover {
+  background: #444;
+}
+
+.inv-item-actions .delete-btn:hover {
+  background: #f44336;
+}
+
+.inv-add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.inv-add input {
+  flex: 1;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 10px;
+  color: #fff;
+}
+
+.inv-add input:focus {
+  border-color: #58a6ff;
+  outline: none;
+}
+
+.inv-add button {
+  background: #4caf50;
+  border: none;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.inv-add button:hover {
+  background: #66bb6a;
+}
+
+.inv-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid #333;
+}
+
+#invCount {
+  color: #888;
+  font-size: 0.9em;
+}
+
+.inv-empty {
+  text-align: center;
+  color: #666;
+  padding: 30px;
+  font-style: italic;
+}
+
+/* Catégories d'objets (couleurs) */
+.inv-item.weapon { border-left: 3px solid #f44336; }
+.inv-item.armor { border-left: 3px solid #2196f3; }
+.inv-item.consumable { border-left: 3px solid #4caf50; }
+.inv-item.key { border-left: 3px solid #ffd700; }
+.inv-item.misc { border-left: 3px solid #9e9e9e; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BLEACH RP – Fiches Joueurs</h1>
+  <div>
+    <button onclick="openNew()">+ Nouvelle fiche</button>
+    <button onclick="saveData()" title="Sauvegarder sur le serveur">💾 Sauvegarder</button>
+    <select id="rpSelect"></select>
+    <button onclick="openNPC()">NPC connus</button>
+  </div>
+</header>
+<!-- Barre latérale gauche -->
+<div id="sidebar">
+  <button id="bestiaireBtn" onclick="openBestiaire()">📜 Bestiaire</button>
+</div>
+
+<main id="container"></main>
+<!-- Section Tchat RP -->
+<section id="chatSection">
+  <h2 class="form-title">Salon RP</h2>
+  <div id="chatWindow"></div>
+
+  <div id="chatControls">
+    <input id="chatMsg" placeholder="Tape un message ou colle un passage du RP…" />
+    <button onclick="sendChat('joueur')">Envoyer</button>
+    <button onclick="sendChat('narrateur')">📜 Narration</button>
+    <button onclick="clearChat()">🗑️ Nettoyer</button>
+  </div>
+</section>
+<!-- Modal Nouvelle Fiche -->
+<div class="modal" id="newModal">
+  <div class="modal-content">
+    <span class="close" onclick="closeNew()">&times;</span>
+    <h2 class="form-title">Créer une nouvelle fiche</h2>
+
+    <div class="form-grid">
+      <div class="block">
+        <label>Nom</label>
+        <input id="newName" placeholder="Nom du personnage">
+      </div>
+
+      <div class="block">
+        <label>Âge</label>
+        <select id="newAge"></select>
+      </div>
+
+      <div class="block" style="grid-column:1/-1;">
+        <label>Passé / Background</label>
+        <textarea id="newPast" placeholder="Ancienne vie, origines…"></textarea>
+      </div>
+
+      <div class="block">
+        <label>Espèce(s)</label>
+        <select id="newSpecies" multiple>
+          <option>Humain</option>
+          <option>Quincy</option>
+          <option>Fullbringer</option>
+          <option>Shinigami</option>
+          <option>Hollow</option>
+          <option>Âme</option>
+          <option>Hybrid</option>
+        </select>
+      </div>
+
+      <div class="block">
+        <label>Langues connues</label>
+        <select id="newLang" multiple>
+          <option>français</option>
+          <option>anglais</option>
+          <option>japonais</option>
+          <option>espagnol</option>
+          <option>allemand</option>
+          <option>portugais</option>
+        </select>
+      </div>
+
+      <div class="block" style="grid-column:1/-1;">
+        <label>Compétences (Skills)</label>
+        <textarea id="newSkills" placeholder="Zanjutsu, Kidō, Cero, Hohō…"></textarea>
+      </div>
+
+      <div class="block">
+        <label>Personnalité</label>
+        <textarea id="newTraits" placeholder="Traits de caractère"></textarea>
+      </div>
+
+      <div class="block">
+        <label>Objectif / Goal</label>
+        <textarea id="newGoals" placeholder="Motivation principale"></textarea>
+      </div>
+    </div>
+
+    <button class="confirm" onclick="saveNew()">✅ Enregistrer la fiche</button>
+  </div>
+</div>
+<!-- ===== MODALE : NPC CONNUS ===== -->
+<div class="modal" id="npcModal">
+  <div class="modal-content">
+    <span class="close" onclick="closeNPC()">&times;</span>
+    <h2 class="form-title">NPC connus</h2>
+    <div id="npcList" style="padding-top:10px;"></div>
+  </div>
+</div>
+<!-- ===== MODALE : BESTIAIRE ===== -->
+<div class="modal" id="bestiaireModal">
+  <div class="modal-content" style="max-width:800px;">
+    <span class="close" onclick="closeBestiaire()">&times;</span>
+    <h2 class="form-title">Bestiaire du monde</h2>
+    <p style="color:#ccc;font-size:0.9em;margin-bottom:10px;">Liste de tous les personnages canons connus et leur position actuelle.</p>
+    <div id="bestiaireList"></div>
+  </div>
+</div>
+<!-- ===== MODALE : DÉTAILS PERSONNAGE ===== -->
+<div class="modal" id="detailModal">
+  <div class="modal-content" style="max-width:650px;">
+    <span class="close" onclick="closeDetail()">&times;</span>
+    <h2 class="form-title">Détails du personnage</h2>
+    <div id="detailContent"></div>
+  </div>
+</div>
+<!-- ===== MODALE : INVENTAIRE ===== -->
+<div class="modal" id="invModal">
+  <div class="modal-content" style="max-width:500px;">
+    <span class="close" onclick="closeInv()">&times;</span>
+    <h2 class="form-title" id="invTitle">Inventaire</h2>
+    
+    <div id="invList" class="inv-list"></div>
+    
+    <div class="inv-add">
+      <input id="newItem" placeholder="Nouvel objet..." />
+      <input id="newItemQty" type="number" value="1" min="1" max="99" style="width:60px;" />
+      <button onclick="addItem()">➕ Ajouter</button>
+    </div>
+    
+    <div class="inv-footer">
+      <span id="invCount">0 objets</span>
+      <button class="btn" onclick="clearInventory()">🗑️ Vider tout</button>
+    </div>
+  </div>
+</div>
+<script>
+let allData={}, currentRP;
+
+async function loadData(){
+  const res=await fetch("/data/rp.json");
+  allData=await res.json();
+  const sel=document.getElementById("rpSelect");
+  sel.innerHTML="";
+  Object.keys(allData).forEach(id=>{
+    const opt=document.createElement("option");
+    opt.value=id; opt.textContent=allData[id].title;
+    sel.appendChild(opt);
+  });
+  sel.onchange=()=>showPlayers(allData[sel.value]);
+  showPlayers(allData[Object.keys(allData)[0]]);
+}
+
+function showPlayers(rp){
+  currentRP=rp;
+  const cont=document.getElementById("container");
+  cont.innerHTML="";
+  
+  rp.players.forEach((p,i)=>{
+    // Générer l'affichage des stats avec barres RELATIVES
+    let statsHTML = "";
+    if(p.stats){
+      const values = Object.values(p.stats);
+      const maxStat = Math.max(...values, 1); // Évite division par 0
+      
+      statsHTML = `<div class="stats-grid">
+        <div class="stats-header">
+          <span>Stats</span>
+          <span class="max-indicator">Max: ${maxStat}</span>
+        </div>
+        ${Object.entries(p.stats).map(([k,v])=>{
+          const percent = (v / maxStat) * 100;
+          const color = getStatColor(percent);
+          return `
+          <div class="stat-item">
+            <span class="stat-name">${k}</span>
+            <div class="stat-bar">
+              <div class="stat-fill" style="width:${percent}%; background:${color}"></div>
+            </div>
+            <span class="stat-value">${v}</span>
+          </div>
+        `}).join("")}
+      </div>`;
+    }
+    
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <div class="card-header">
+        <div class="name">${p.name}</div>
+        <div class="level-badge">Niv. ${p.level || 1}</div>
+      </div>
+      <div class="species">${p.species}</div>
+      <div class="xp-bar">
+        <div class="xp-fill" style="width:${(p.xp || 0) % 100}%"></div>
+        <span class="xp-text">XP: ${p.xp || 0}/100</span>
+      </div>
+      <div>Âge : ${p.age||"?"}</div>
+      <div>Langues : ${p.languages||"-"}</div>
+      <div><b>Compétences</b> : ${p.skills||"-"}</div>
+      <div><b>Personnalité</b> : ${p.traits||"-"}</div>
+      <div><b>But</b> : ${p.goals||"-"}</div>
+      ${statsHTML}
+      <div class="card-buttons">
+        <button class='btn' onclick='openInventory(${i})'>🎒 Inventaire</button>
+        <button class='btn' onclick='addXP(${i})'>⭐ +10 XP</button>
+        <button class='btn' onclick='deleteCard(${i})'>🗑️ Supprimer</button>
+      </div>
+    `;
+    cont.appendChild(c);
+  });
+}
+
+// Couleur dynamique selon le pourcentage relatif
+function getStatColor(percent){
+  if(percent >= 90) return 'linear-gradient(90deg, #ffd700, #ffaa00)'; // Or - Max
+  if(percent >= 70) return 'linear-gradient(90deg, #4caf50, #8bc34a)'; // Vert - Haut
+  if(percent >= 50) return 'linear-gradient(90deg, #2196f3, #00bcd4)'; // Bleu - Moyen
+  if(percent >= 30) return 'linear-gradient(90deg, #ff9800, #ffc107)'; // Orange - Bas
+  return 'linear-gradient(90deg, #f44336, #ff5722)'; // Rouge - Très bas
+}
+
+function addXP(i){
+  const pj = currentRP.players[i];
+  pj.xp = (pj.xp || 0) + 10;
+  
+  // Level up tous les 100 XP
+  if(pj.xp >= 100){
+    pj.level = (pj.level || 1) + 1;
+    pj.xp = pj.xp - 100;
+    
+    // Augmenter une stat aléatoire de 1-3 points
+    const statKeys = Object.keys(pj.stats);
+    const randomKey = statKeys[Math.floor(Math.random() * statKeys.length)];
+    const bonus = Math.floor(Math.random() * 3) + 1;
+    pj.stats[randomKey] = Math.min(100, pj.stats[randomKey] + bonus);
+    
+    alert(`🎉 ${pj.name} passe niveau ${pj.level} !\n+${bonus} en ${randomKey}`);
+  }
+  
+  showPlayers(currentRP);
+}
+
+// ----- CREATE FORM -----
+function openNew(){
+  const modal=document.getElementById("newModal");
+  genAgeOptions(1); // valeurs par défaut humain‑like
+  modal.style.display="flex";
+  // adapter âge selon espèce
+  document.getElementById("newSpecies").onchange=updateAgeChoices;
+}
+function closeNew(){document.getElementById("newModal").style.display="none";}
+
+function genAgeOptions(max,step=1){
+  const sel=document.getElementById("newAge");
+  sel.innerHTML="";
+  if(max>1000){ sel.innerHTML="<option>50</option><option>100</option><option>500</option><option>1000</option><option>5000</option><option>10000+</option>"; return;}
+  for(let i=1;i<=max;i+=step){
+    const o=document.createElement("option");
+    o.text=i; o.value=i;
+    sel.appendChild(o);
+  }
+}
+
+function updateAgeChoices(){
+  const vals=Array.from(document.getElementById("newSpecies").selectedOptions).map(o=>o.text);
+  if(vals.some(v=>["Shinigami","Hollow","Âme"].includes(v))) genAgeOptions(10000);
+  else genAgeOptions(100);
+}
+
+function saveNew(){
+  // Générer des stats aléatoires entre 0 et 10
+  const randomStat = () => Math.floor(Math.random() * 11); // 0 à 10
+  
+  const n={
+    name: document.getElementById("newName").value.trim(),
+    age: document.getElementById("newAge").value,
+    past: document.getElementById("newPast").value.trim(),
+    species: Array.from(document.getElementById("newSpecies").selectedOptions).map(o=>o.text).join(", "),
+    skills: document.getElementById("newSkills").value.trim(),
+    languages: Array.from(document.getElementById("newLang").selectedOptions).map(o=>o.text).join(", "),
+    traits: document.getElementById("newTraits").value.trim(),
+    goals: document.getElementById("newGoals").value.trim(),
+    inventory: [],
+    // ⬇️ NOUVEAU : Niveau et stats automatiques
+    level: 1,
+    xp: 0,
+    stats: {
+      Reiatsu: randomStat(),
+      Zanjutsu: randomStat(),
+      Hakuda: randomStat(),
+      Hohō: randomStat(),
+      Kidō: randomStat(),
+      Intellect: randomStat()
+    }
+  };
+  
+  if(!n.name){alert("Nom obligatoire");return;}
+  currentRP.players.push(n);
+  closeNew(); 
+  showPlayers(currentRP);
+}
+
+// ----- Delete -----
+function deleteCard(i){
+  if(confirm("Supprimer cette fiche ?")){
+    currentRP.players.splice(i,1);
+    showPlayers(currentRP);
+  }
+}
+
+// ----- INVENTAIRE -----
+let currentInvIndex = -1;
+
+function openInventory(i){
+  currentInvIndex = i;
+  const pj = currentRP.players[i];
+  
+  // Initialiser l'inventaire s'il n'existe pas
+  if(!pj.inventory) pj.inventory = [];
+  
+  document.getElementById("invTitle").innerText = "🎒 Inventaire de " + pj.name;
+  renderInventory();
+  document.getElementById("invModal").style.display = "flex";
+}
+
+function renderInventory(){
+  const pj = currentRP.players[currentInvIndex];
+  const inv = pj.inventory || [];
+  const list = document.getElementById("invList");
+  
+  if(inv.length === 0){
+    list.innerHTML = '<div class="inv-empty">📦 Inventaire vide</div>';
+  } else {
+    list.innerHTML = inv.map((item, idx) => {
+      const itemData = parseItem(item);
+      return `
+        <div class="inv-item ${itemData.category}">
+          <span class="inv-item-name">${itemData.icon} ${itemData.name}</span>
+          <span class="inv-item-qty">x${itemData.qty}</span>
+          <div class="inv-item-actions">
+            <button onclick="changeQty(${idx}, -1)">➖</button>
+            <button onclick="changeQty(${idx}, 1)">➕</button>
+            <button class="delete-btn" onclick="removeItem(${idx})">🗑️</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+  
+  // Compteur
+  const totalItems = inv.reduce((sum, item) => {
+    const q = parseItem(item).qty;
+    return sum + q;
+  }, 0);
+  document.getElementById("invCount").innerText = `${inv.length} type(s), ${totalItems} objet(s)`;
+}
+
+function parseItem(item){
+  // Format: "nom" ou "nom|qty" ou "nom|qty|category"
+  if(typeof item === 'object'){
+    return {
+      name: item.name || item,
+      qty: item.qty || 1,
+      category: item.category || 'misc',
+      icon: getItemIcon(item.category || 'misc')
+    };
+  }
+  
+  const parts = item.split('|');
+  const name = parts[0] || item;
+  const qty = parseInt(parts[1]) || 1;
+  const category = parts[2] || guessCategory(name);
+  
+  return {
+    name: name,
+    qty: qty,
+    category: category,
+    icon: getItemIcon(category)
+  };
+}
+
+function guessCategory(name){
+  const lower = name.toLowerCase();
+  if(lower.includes('épée') || lower.includes('zanpakuto') || lower.includes('arme') || lower.includes('katana')) return 'weapon';
+  if(lower.includes('armure') || lower.includes('protection') || lower.includes('bouclier')) return 'armor';
+  if(lower.includes('potion') || lower.includes('pilule') || lower.includes('nourriture') || lower.includes('soin')) return 'consumable';
+  if(lower.includes('clé') || lower.includes('badge') || lower.includes('pass')) return 'key';
+  return 'misc';
+}
+
+function getItemIcon(category){
+  switch(category){
+    case 'weapon': return '⚔️';
+    case 'armor': return '🛡️';
+    case 'consumable': return '🧪';
+    case 'key': return '🔑';
+    default: return '📦';
+  }
+}
+
+function addItem(){
+  const nameInput = document.getElementById("newItem");
+  const qtyInput = document.getElementById("newItemQty");
+  
+  const name = nameInput.value.trim();
+  const qty = parseInt(qtyInput.value) || 1;
+  
+  if(!name){
+    alert("Entrez un nom d'objet");
+    return;
+  }
+  
+  const pj = currentRP.players[currentInvIndex];
+  
+  // Vérifier si l'objet existe déjà
+  const existingIndex = pj.inventory.findIndex(item => {
+    const parsed = parseItem(item);
+    return parsed.name.toLowerCase() === name.toLowerCase();
+  });
+  
+  if(existingIndex >= 0){
+    // Augmenter la quantité
+    const existing = parseItem(pj.inventory[existingIndex]);
+    const category = existing.category;
+    pj.inventory[existingIndex] = `${existing.name}|${existing.qty + qty}|${category}`;
+  } else {
+    // Ajouter nouvel objet
+    const category = guessCategory(name);
+    pj.inventory.push(`${name}|${qty}|${category}`);
+  }
+  
+  nameInput.value = "";
+  qtyInput.value = "1";
+  renderInventory();
+}
+
+function changeQty(idx, delta){
+  const pj = currentRP.players[currentInvIndex];
+  const item = parseItem(pj.inventory[idx]);
+  
+  const newQty = item.qty + delta;
+  
+  if(newQty <= 0){
+    removeItem(idx);
+  } else {
+    pj.inventory[idx] = `${item.name}|${newQty}|${item.category}`;
+    renderInventory();
+  }
+}
+
+function removeItem(idx){
+  const pj = currentRP.players[currentInvIndex];
+  const item = parseItem(pj.inventory[idx]);
+  
+  if(confirm(`Supprimer "${item.name}" ?`)){
+    pj.inventory.splice(idx, 1);
+    renderInventory();
+  }
+}
+
+function clearInventory(){
+  if(confirm("Vider tout l'inventaire ?")){
+    currentRP.players[currentInvIndex].inventory = [];
+    renderInventory();
+  }
+}
+
+function closeInv(){
+  document.getElementById("invModal").style.display = "none";
+  currentInvIndex = -1;
+}
+
+// ----- NPC -----
+function openNPC(){
+  const list=document.getElementById("npcList");
+  list.innerHTML="";
+  (currentRP.npcs||[]).forEach(n=>{
+    const d=document.createElement("div");
+    d.className="npcCard";
+    d.innerHTML=`<b>${n.name}</b> — vu par: ${n.knownBy.join(", ")}<br><i>${n.description||""}</i>`;
+    list.appendChild(d);
+  });
+  document.getElementById("npcModal").style.display="flex";
+}
+function closeNPC(){document.getElementById("npcModal").style.display="none";}
+
+
+// ---- BESTIAIRE ----
+function openBestiaire(){
+  const modal=document.getElementById("bestiaireModal");
+  const list=document.getElementById("bestiaireList");
+  list.innerHTML="";
+
+  const factions = currentRP.bestiaire || {};
+  if(Object.keys(factions).length===0){
+    list.innerHTML="<i>Aucun personnage défini pour ce RP.</i>";
+    modal.style.display="flex";
+    return;
+  }
+
+  Object.entries(factions).forEach(([faction, persos])=>{
+    const bloc=document.createElement("div");
+    bloc.innerHTML=`<h3 style="margin-top:20px;color:#ffcc66">${faction}</h3>`;
+    persos.forEach((p,index)=>{
+      const known = (p.knownBy && p.knownBy.length>0);
+      const color = known ? "#58a6ff" : "#777";
+      const who   = known ? `(vu par : ${p.knownBy.join(", ")})` : "(inconnu)";
+      const div=document.createElement("div");
+      div.style.borderBottom="1px solid #333";
+      div.style.padding="8px 2px";
+      div.innerHTML=`
+        <b style="color:${color}">${p.name}</b>
+        <button class='btn' style='float:right' onclick='openDetail("${faction}",${index})'>🔍 Détails</button>
+        <br><span style="color:#aaa">${p.role||""}</span><br>
+        <span style="color:#aaa;">Localisation :</span> ${p.location||"?"}<br>
+        <small>${who}</small>
+      `;
+      bloc.appendChild(div);
+    });
+    list.appendChild(bloc);
+  });
+
+  modal.style.display="flex";
+}
+
+function closeBestiaire(){
+  document.getElementById("bestiaireModal").style.display="none";
+}
+
+/* --- Nouvelle fonction détail --- */
+function openDetail(factionName,index){
+  const faction = currentRP.bestiaire[factionName];
+  if(!faction) return;
+  const p = faction[index];
+  const detail = document.getElementById("detailContent");
+
+  // Stats relatives pour le bestiaire aussi
+  let statsHTML = "";
+  if(p.stats){
+    const values = Object.values(p.stats).filter(v => typeof v === 'number');
+    const maxStat = Math.max(...values, 1);
+    
+    statsHTML = `<div class="stats-grid" style="margin-top:15px;">
+      <div class="stats-header">
+        <span>Stats</span>
+        <span class="max-indicator">Max: ${maxStat}</span>
+      </div>
+      ${Object.entries(p.stats).map(([k,v])=>{
+        if(typeof v !== 'number') return `<div class="stat-item"><span class="stat-name">${k}</span><span>${v}</span></div>`;
+        const percent = (v / maxStat) * 100;
+        const color = getStatColor(percent);
+        return `
+        <div class="stat-item">
+          <span class="stat-name">${k}</span>
+          <div class="stat-bar">
+            <div class="stat-fill" style="width:${percent}%; background:${color}"></div>
+          </div>
+          <span class="stat-value">${v}</span>
+        </div>
+      `}).join("")}
+    </div>`;
+  }
+
+  detail.innerHTML = `
+    <h3 style="color:#58a6ff;margin-top:0;">${p.name}</h3>
+    <p><b>Espèce :</b> ${p.species || "?"} | <b>Faction :</b> ${factionName}</p>
+    ${p.age ? `<p><b>Âge :</b> ${p.age}</p>` : ""}
+    <p><b>Rôle :</b> ${p.role || "–"}</p>
+    <p><b>Localisation actuelle :</b> ${p.location || "Inconnue"}</p>
+    ${p.appearance ? `<p><b>Apparence :</b><br>${p.appearance}</p>` : ""}
+    ${p.description ? `<p><b>Description :</b><br>${p.description}</p>` : ""}
+    ${p.techniques ? `<p><b>Techniques connues :</b><br>${p.techniques.join(", ")}</p>` : ""}
+    ${statsHTML}
+    ${p.hidden ? `<details><summary>🔒 Informations cachées</summary><p>${p.hidden}</p></details>` : ""}
+  `;
+  document.getElementById("detailModal").style.display="flex";
+}
+
+function closeDetail(){
+  document.getElementById("detailModal").style.display="none";
+}
+
+
+
+/* ----------- TCHAT VISUEL ----------- */
+/* ----------- TCHAT GPT CONNECTÉ ----------- */
+async function sendChat(type){
+  const msgField=document.getElementById("chatMsg");
+  const txt=msgField.value.trim();
+  if(!txt) return;
+
+  appendMsg("joueur", txt);
+  msgField.value="";
+  try{
+    const r = await fetch("/hf",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({message:txt})
+    });
+    const data = await r.json();
+    appendMsg("narrateur", data.reply || "(Pas de réponse)");
+  }catch(e){
+    appendMsg("narrateur","⚠️ Erreur : "+e.message);
+  }
+}
+
+function appendMsg(role,text){
+  const win=document.getElementById("chatWindow");
+  const div=document.createElement("div");
+  div.className="msg "+role;
+  div.innerText=text;
+  win.appendChild(div);
+  win.scrollTop=win.scrollHeight;
+}
+
+function clearChat(){
+  if(confirm("Vider le salon RP ?"))
+    document.getElementById("chatWindow").innerHTML="";
+}
+
+// ----- SAVE TO SERVER -----
+async function saveData(){
+  const res=await fetch("/save",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(allData)
+  });
+  const r=await res.json();
+  if(r.ok) alert("✅ Sauvegardé dans data/rp.json");
+  else alert("❌ Erreur : "+r.error);
+}
+
+loadData();
+</script>
+</body>
+</html>

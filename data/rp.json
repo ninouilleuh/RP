@@ -1,0 +1,208 @@
+{
+  "rp1": {
+    "title": "RP1 – Karakura Night",
+    "players": [],
+    "npcs": [
+      {
+        "name": "Kisuke Urahara",
+        "knownBy": [
+          "Aoi"
+        ],
+        "description": "Propriétaire du magasin Urahara Shop, parle rarement de son passé.",
+        "stats": {
+          "Reiatsu": "inconnu",
+          "Kidō": 90
+        }
+      },
+      {
+        "name": "Kuchiki Byakuya",
+        "knownBy": [
+          "Shiori"
+        ],
+        "description": "Capitaine de la 6ème division du gotei 13.",
+        "stats": {
+          "Reiatsu": "modéré",
+          "psychologie": "Traumatisé"
+        }
+      }
+    ],
+    "bestiaire": {
+      "Gotei13": [
+        {
+          "name": "Genryūsai Yamamoto",
+          "species": "Shinigami",
+          "role": "Commandant du Gotei 13",
+          "location": "Soul Society – Seireitei",
+          "knownBy": [],
+          "age": "Plus de 2000 ans",
+          "stats": {
+            "Reiatsu": 100,
+            "Zanjutsu": 99,
+            "Kidō": 90,
+            "Hohō": 73,
+            "Hakuda": 85,
+            "Intellect": 88
+          },
+          "techniques": [
+            "Ryūjin Jakka"
+          ],
+          "description": "Chef légendaire du Gotei 13, maître du feu.",
+          "appearance": "Vieil homme barbu au regard sévère.",
+          "hidden": "Ancienne bataille contre Yhwach."
+        },
+        {
+          "name": "Soi-Fon",
+          "species": "Shinigami",
+          "role": "Capitaine de la 2e Division",
+          "location": "Soul Society",
+          "knownBy": [],
+          "age": "Environ 250 ans",
+          "stats": {
+            "Reiatsu": 85,
+            "Zanjutsu": 80,
+            "Kidō": 85,
+            "Intellect": 90
+          },
+          "techniques": [
+            "Senbonzakura Kageyoshi"
+          ],
+          "description": "Noble froid et rigoureux, défenseur de la loi.",
+          "appearance": "Chevelure noire, shihakusho blanc et écharpe noble.",
+          "hidden": "Porte encore le poids de la mort de ses parents."
+        },
+        {
+          "name": "Byakuya Kuchiki",
+          "species": "Shinigami",
+          "role": "Capitaine de la 6e Division",
+          "location": "Soul Society",
+          "knownBy": [],
+          "age": "Environ 250 ans",
+          "stats": {
+            "Reiatsu": 85,
+            "Zanjutsu": 80,
+            "Kidō": 85,
+            "Intellect": 90
+          },
+          "techniques": [
+            "Senbonzakura Kageyoshi"
+          ],
+          "description": "Noble froid et rigoureux, défenseur de la loi.",
+          "appearance": "Chevelure noire, shihakusho blanc et écharpe noble.",
+          "hidden": "Porte encore le poids de la mort de ses parents."
+        }
+      ],
+      "Hollows": [
+        {
+          "name": "Ulquiorra Cifer",
+          "species": "Arrancar",
+          "role": "Espada n° 4",
+          "location": "Hueco Mundo – Las Noches",
+          "knownBy": [],
+          "age": "Inconnue",
+          "stats": {
+            "Reiatsu": 92,
+            "Zanjutsu": 70,
+            "Intellect": 85,
+            "Velocité": 90
+          },
+          "techniques": [
+            "Cero Oscuras",
+            "Lanza del Relámpago"
+          ],
+          "description": "Stoïque, incarne le néant et l’absence d’émotion.",
+          "appearance": "Arrancar pâle aux cornes brisées et aux yeux vert émeraude.",
+          "hidden": "Possède une forme Resurrección secondaire."
+        },
+        {
+          "name": "Grimmjow Jaggerjack",
+          "species": "Arrancar",
+          "role": "Espada n° 6",
+          "location": "Hueco Mundo",
+          "knownBy": [],
+          "stats": {
+            "Reiatsu": 88,
+            "Zanjutsu": 80,
+            "Vitesse": 90,
+            "Intellect": 70
+          },
+          "techniques": [
+            "Desgarrón",
+            "Gran Rei Cero"
+          ],
+          "description": "Impulsif et fier, cherche à prouver sa force.",
+          "appearance": "Cheveux bleus clairs, sourire carnassier.",
+          "hidden": "Admire le courage de certains ennemis."
+        }
+      ],
+      "Quincy": [
+        {
+          "name": "Uryū Ishida",
+          "species": "Quincy",
+          "role": "Archer humaine de Karakura",
+          "location": "Karakura Town",
+          "knownBy": [
+            "Nina Takeda"
+          ],
+          "age": "17 ans",
+          "stats": {
+            "Reiatsu": 55,
+            "Reishi Control": 65,
+            "Intellect": 78,
+            "Vitesse": 62
+          },
+          "techniques": [
+            "Heilig Pfeil",
+            "Licht Regen"
+          ],
+          "description": "Étudiant discipliné, dernier Quincy connu en ville.",
+          "appearance": "Jeune homme aux lunettes et cheveux noirs.",
+          "hidden": "Lié aux plans du Vandenreich."
+        }
+      ],
+      "Autres": [
+        {
+          "name": "Kisuke Urahara",
+          "species": "Ex‑Shinigami",
+          "role": "Propriétaire du Urahara Shop",
+          "location": "Karakura Town",
+          "knownBy": [
+            "Nina Takeda"
+          ],
+          "age": "Inconnue",
+          "stats": {
+            "Reiatsu": 93,
+            "Kidō": 98,
+            "Intellect": 100,
+            "Vitesse": 84
+          },
+          "techniques": [
+            "Benihime",
+            "Kekkai"
+          ],
+          "description": "Scientifique brillant et ex‑capitaine réfugié.",
+          "appearance": "Chapeau rayé et kimono vert, éventail en main.",
+          "hidden": "Cherche à maîtriser les pouvoirs du Hōgyoku."
+        },
+        {
+          "name": "Orihime Inoue",
+          "species": "Humaine spirituelle",
+          "role": "Étudiante et guérisseuse",
+          "location": "Karakura Town",
+          "knownBy": [],
+          "age": "17 ans",
+          "stats": {
+            "Reiatsu": 45,
+            "Pouvoirs spirituels": 65,
+            "Intellect": 75
+          },
+          "techniques": [
+            "Shun Shun Rikka"
+          ],
+          "description": "Jeune fille douce dotée de facultés de soin exceptionnelles.",
+          "appearance": "Cheveux orangés, attitude chaleureuse.",
+          "hidden": "Capacité liée à la causalité temporelle."
+        }
+      ]
+    }
+  }
+}
