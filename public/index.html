@@ -1291,6 +1291,152 @@ function closeDetail(){
 }
 
 
+// ----- SYSTÈME DE DÉPLACEMENT -----
+let currentTravelIndex = -1;
+let currentRegion = 'monde_humain';
+
+// Définition des lieux par région
+const LOCATIONS = {
+  monde_humain: [
+    { id: 'karakura', name: 'Karakura Town', icon: '🏙️', desc: 'Ville principale' },
+    { id: 'karakura_school', name: 'Lycée Karakura', icon: '🏫', desc: 'École d\'Ichigo' },
+    { id: 'urahara_shop', name: 'Urahara Shop', icon: '🏪', desc: 'Magasin mystérieux' },
+    { id: 'karakura_hospital', name: 'Hôpital', icon: '🏥', desc: 'Clinique Kurosaki' },
+    { id: 'karakura_park', name: 'Parc central', icon: '🌳', desc: 'Lieu de rencontre' },
+    { id: 'karakura_river', name: 'Rivière', icon: '🌊', desc: 'Berges calmes' },
+    { id: 'naruki_city', name: 'Naruki City', icon: '🌃', desc: 'Ville voisine' }
+  ],
+  soul_society: [
+    { id: 'seireitei', name: 'Seireitei', icon: '⛩️', desc: 'Cité des Shinigami' },
+    { id: 'gotei13_hq', name: 'QG du Gotei 13', icon: '🏯', desc: 'Quartier général' },
+    { id: 'division_1', name: '1ère Division', icon: '1️⃣', desc: 'Commandement' },
+    { id: 'division_4', name: '4ème Division', icon: '4️⃣', desc: 'Soins médicaux' },
+    { id: 'division_11', name: '11ème Division', icon: '⚔️', desc: 'Combat' },
+    { id: 'division_12', name: '12ème Division', icon: '🔬', desc: 'Recherche' },
+    { id: 'rukongai', name: 'Rukongai', icon: '🏚️', desc: 'Districts extérieurs' },
+    { id: 'sokyoku_hill', name: 'Colline Sōkyoku', icon: '⛰️', desc: 'Lieu d\'exécution' },
+    { id: 'central_46', name: 'Central 46', icon: '⚖️', desc: 'Tribunal suprême' }
+  ],
+  hueco_mundo: [
+    { id: 'las_noches', name: 'Las Noches', icon: '🏰', desc: 'Palais d\'Aizen' },
+    { id: 'menos_forest', name: 'Forêt des Menos', icon: '🌲', desc: 'Territoire Hollow' },
+    { id: 'white_desert', name: 'Désert blanc', icon: '🏜️', desc: 'Sables infinis' },
+    { id: 'espada_quarters', name: 'Quartiers Espada', icon: '👑', desc: 'Résidence des Espada' },
+    { id: 'throne_room', name: 'Salle du trône', icon: '🪑', desc: 'Centre du pouvoir' }
+  ],
+  autres: [
+    { id: 'dangai', name: 'Dangai', icon: '🌀', desc: 'Passage entre mondes' },
+    { id: 'valley_screams', name: 'Vallée des Cris', icon: '👻', desc: 'Dimension parallèle' },
+    { id: 'royal_palace', name: 'Palais du Roi', icon: '👑', desc: 'Dimension royale', locked: true },
+    { id: 'wandenreich', name: 'Wandenreich', icon: '✝️', desc: 'Empire Quincy', locked: true },
+    { id: 'garganta', name: 'Garganta', icon: '🕳️', desc: 'Voie des Hollows' }
+  ]
+};
+
+function openTravel(i) {
+  currentTravelIndex = i;
+  const pj = currentRP.players[i];
+  
+  document.getElementById("travelTitle").innerText = "🚶 Déplacement de " + pj.name;
+  document.getElementById("currentLocationDisplay").innerText = pj.location || "Inconnu";
+  
+  // Reset tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelector('.tab-btn').classList.add('active');
+  
+  currentRegion = 'monde_humain';
+  renderLocations();
+  
+  document.getElementById("travelModal").style.display = "flex";
+}
+
+function closeTravel() {
+  document.getElementById("travelModal").style.display = "none";
+  currentTravelIndex = -1;
+}
+
+function showRegion(region) {
+  currentRegion = region;
+  
+  // Update active tab
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if(btn.onclick.toString().includes(region)) {
+      btn.classList.add('active');
+    }
+  });
+  
+  renderLocations();
+}
+
+function renderLocations() {
+  const pj = currentRP.players[currentTravelIndex];
+  const currentLoc = pj.location || "";
+  const locations = LOCATIONS[currentRegion] || [];
+  const list = document.getElementById("locationsList");
+  
+  list.innerHTML = locations.map(loc => {
+    const isCurrent = currentLoc.toLowerCase() === loc.name.toLowerCase();
+    const isLocked = loc.locked || false;
+    
+    let classes = "location-card";
+    if(isCurrent) classes += " current";
+    if(isLocked) classes += " locked";
+    
+    return `
+      <div class="${classes}" onclick="${isLocked ? '' : `travelTo('${loc.name}')`}">
+        <span class="loc-icon">${loc.icon}</span>
+        <span class="loc-name">${isCurrent ? '✓ ' : ''}${loc.name}</span>
+        <span class="loc-desc">${isLocked ? '🔒 Verrouillé' : loc.desc}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+function travelTo(locationName) {
+  const pj = currentRP.players[currentTravelIndex];
+  
+  if(pj.location === locationName) {
+    alert("Vous êtes déjà à cet endroit !");
+    return;
+  }
+  
+  const oldLocation = pj.location || "Inconnu";
+  pj.location = locationName;
+  
+  // Animation
+  document.getElementById("locationsList").classList.add("traveling");
+  setTimeout(() => {
+    document.getElementById("locationsList").classList.remove("traveling");
+  }, 500);
+  
+  // Update display
+  document.getElementById("currentLocationDisplay").innerText = locationName;
+  renderLocations();
+  showPlayers(currentRP);
+  
+  // Notification
+  appendMsg("narrateur", `📍 ${pj.name} se déplace de "${oldLocation}" vers "${locationName}".`);
+}
+
+// Fonction pour ajouter un lieu personnalisé (bonus)
+function addCustomLocation() {
+  const name = prompt("Nom du nouveau lieu :");
+  if(!name) return;
+  
+  const region = currentRegion;
+  const icon = prompt("Icône (emoji) :", "📍") || "📍";
+  const desc = prompt("Description courte :", "") || "";
+  
+  LOCATIONS[region].push({
+    id: name.toLowerCase().replace(/\s/g, '_'),
+    name: name,
+    icon: icon,
+    desc: desc
+  });
+  
+  renderLocations();
+}
 
 /* ----------- TCHAT VISUEL ----------- */
 /* ----------- TCHAT GPT CONNECTÉ ----------- */
