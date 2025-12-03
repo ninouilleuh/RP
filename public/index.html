@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="/socket.io/socket.io.js"></script>
 <meta charset="UTF-8">
 <title>BLEACH RP – Fiches Joueurs</title>
 <style>
@@ -667,35 +668,2174 @@ button.confirm:hover{background:#0099ff;}
 .traveling {
   animation: traveling 0.5s ease;
 }
+/* --- SYSTÈME DE TOUR PAR TOUR --- */
+.turn-indicator {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.turn-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.turn-number {
+  background: #58a6ff;
+  color: #000;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.current-player {
+  font-size: 1.1em;
+  color: #fff;
+}
+
+.current-player .player-name {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.turn-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.turn-controls button {
+  background: #333;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.turn-controls button:hover {
+  background: #444;
+}
+
+.turn-controls button.skip-btn {
+  background: #ff9800;
+  color: #000;
+}
+
+.turn-controls button.skip-btn:hover {
+  background: #ffb74d;
+}
+
+/* Liste des joueurs dans l'ordre */
+.turn-order {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 10px;
+  background: #111;
+  border-radius: 8px;
+}
+
+.turn-player {
+  background: #222;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.85em;
+  color: #888;
+  border: 1px solid #333;
+  transition: all 0.3s;
+}
+
+.turn-player.active {
+  background: #1a3a1a;
+  color: #4caf50;
+  border-color: #4caf50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+.turn-player.played {
+  background: #2a2a2a;
+  color: #666;
+  text-decoration: line-through;
+}
+
+.turn-player .player-index {
+  background: #444;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75em;
+  margin-right: 5px;
+}
+
+.turn-player.active .player-index {
+  background: #4caf50;
+  color: #000;
+}
+
+/* Message avec indication du joueur */
+.msg .msg-author {
+  font-size: 0.75em;
+  color: #888;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.msg .msg-turn {
+  font-size: 0.7em;
+  color: #666;
+  float: right;
+}
+
+/* Indicateur visuel dans le chat */
+#chatControls.disabled input {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+#chatControls .waiting-msg {
+  color: #ff9800;
+  font-size: 0.85em;
+  padding: 5px 10px;
+}
+
+/* Animation du tour actif */
+@keyframes pulse-turn {
+  0% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); }
+  50% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.6); }
+  100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); }
+}
+
+.turn-player.active {
+  animation: pulse-turn 2s infinite;
+}
+
+/* --- MAP INTERACTIVE --- */
+.map-regions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.region-btn {
+  background: #222;
+  border: 1px solid #333;
+  color: #aaa;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1em;
+}
+
+.region-btn:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.region-btn.active {
+  background: linear-gradient(135deg, #58a6ff, #0078ff);
+  color: #fff;
+  border-color: #58a6ff;
+  font-weight: bold;
+}
+
+.map-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  min-height: 400px;
+}
+
+@media (max-width: 700px) {
+  .map-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.map-locations {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  max-height: 450px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #111;
+  border-radius: 10px;
+  border: 1px solid #333;
+}
+
+.map-location {
+  background: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 15px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.map-location:hover {
+  background: #252525;
+  border-color: #58a6ff;
+  transform: scale(1.05);
+}
+
+.map-location.selected {
+  background: #1a2a3a;
+  border-color: #58a6ff;
+  box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);
+}
+
+.map-location .loc-icon {
+  font-size: 2em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.map-location .loc-name {
+  font-size: 0.85em;
+  color: #eee;
+  font-weight: 500;
+}
+
+.map-location .loc-players {
+  font-size: 0.7em;
+  color: #4caf50;
+  margin-top: 5px;
+}
+
+/* Panneau de détails */
+.location-details {
+  background: #151515;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 20px;
+  overflow-y: auto;
+  max-height: 450px;
+}
+
+.location-placeholder {
+  text-align: center;
+  color: #666;
+  padding: 50px 20px;
+}
+
+.location-placeholder span {
+  font-size: 3em;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.location-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #333;
+}
+
+.location-header .header-icon {
+  font-size: 2.5em;
+}
+
+.location-header .header-info h3 {
+  margin: 0;
+  color: #58a6ff;
+  font-size: 1.3em;
+}
+
+.location-header .header-info p {
+  margin: 5px 0 0;
+  color: #888;
+  font-size: 0.9em;
+}
+
+/* Météo */
+.weather-box {
+  background: linear-gradient(135deg, #1a2a3a, #0d1a2a);
+  border: 1px solid #2a4a6a;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.weather-icon {
+  font-size: 2.5em;
+}
+
+.weather-info .weather-name {
+  font-size: 1.1em;
+  color: #fff;
+  font-weight: bold;
+}
+
+.weather-info .weather-desc {
+  font-size: 0.85em;
+  color: #888;
+  margin-top: 3px;
+}
+
+.weather-info .weather-temp {
+  font-size: 0.9em;
+  color: #58a6ff;
+  margin-top: 5px;
+}
+
+/* Sections */
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section h4 {
+  color: #ffcc66;
+  margin: 0 0 10px 0;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-section h4::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background: #ffcc66;
+  border-radius: 2px;
+}
+
+/* Joueurs présents */
+.players-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.player-tag {
+  background: #1a3a1a;
+  border: 1px solid #4caf50;
+  color: #4caf50;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.player-tag .player-level {
+  background: #4caf50;
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75em;
+  font-weight: bold;
+}
+
+/* NPCs */
+.npc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.npc-card {
+  background: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.npc-card:hover {
+  background: #2a2a2a;
+  border-color: #58a6ff;
+}
+
+.npc-card .npc-icon {
+  font-size: 1.5em;
+}
+
+.npc-card .npc-info {
+  flex: 1;
+}
+
+.npc-card .npc-name {
+  color: #eee;
+  font-weight: 500;
+}
+
+.npc-card .npc-role {
+  color: #888;
+  font-size: 0.8em;
+}
+
+.npc-card .npc-attitude {
+  font-size: 0.75em;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.npc-card .npc-attitude.friendly { background: #1a3a1a; color: #4caf50; }
+.npc-card .npc-attitude.neutral { background: #3a3a1a; color: #ffcc66; }
+.npc-card .npc-attitude.hostile { background: #3a1a1a; color: #f44336; }
+.npc-card .npc-attitude.unknown { background: #2a2a2a; color: #888; }
+
+/* Boutiques */
+.shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shop-card {
+  background: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shop-card:hover {
+  background: #2a2a2a;
+  border-color: #ffcc66;
+}
+
+.shop-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.shop-header .shop-icon {
+  font-size: 1.5em;
+}
+
+.shop-header .shop-name {
+  color: #ffcc66;
+  font-weight: bold;
+  flex: 1;
+}
+
+.shop-header .shop-status {
+  font-size: 0.75em;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.shop-header .shop-status.open { background: #1a3a1a; color: #4caf50; }
+.shop-header .shop-status.closed { background: #3a1a1a; color: #f44336; }
+
+.shop-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.shop-item {
+  background: #2a2a2a;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 0.75em;
+  color: #aaa;
+}
+
+/* Événements */
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-card {
+  background: linear-gradient(135deg, #2a1a1a, #1a1a2a);
+  border: 1px solid #4a3a3a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.event-card .event-icon {
+  font-size: 1.3em;
+}
+
+.event-card .event-info {
+  flex: 1;
+}
+
+.event-card .event-name {
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.event-card .event-desc {
+  color: #888;
+  font-size: 0.8em;
+}
+
+/* Aucun élément */
+.empty-section {
+  color: #666;
+  font-style: italic;
+  font-size: 0.9em;
+  padding: 10px;
+  text-align: center;
+}
+
+/* --- HEADER DATETIME --- */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.rp-datetime {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  padding: 8px 15px;
+  border-radius: 20px;
+  border: 1px solid #333;
+}
+
+.rp-date {
+  color: #58a6ff;
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
+.rp-time {
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 0.9em;
+  padding-left: 10px;
+  border-left: 1px solid #444;
+}
+
+.time-btn {
+  background: #333;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.time-btn:hover {
+  background: #444;
+}
+
+/* --- MODALE TEMPS --- */
+.time-display {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.time-current, .time-tour {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+}
+
+.time-label {
+  display: block;
+  color: #888;
+  font-size: 0.85em;
+  margin-bottom: 8px;
+}
+
+.time-value {
+  color: #58a6ff;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.time-tour .time-value {
+  color: #ffd700;
+}
+
+.time-info {
+  background: #1a2a1a;
+  border: 1px solid #2a4a2a;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.time-info p {
+  margin: 0 0 10px 0;
+  color: #aaa;
+}
+
+.time-info ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.time-info li {
+  color: #ccc;
+  margin: 5px 0;
+}
+
+#daysUntilEvent {
+  color: #ff9800;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.time-controls {
+  background: #151515;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.time-controls h4 {
+  margin: 0 0 12px 0;
+  color: #58a6ff;
+  font-size: 0.95em;
+}
+
+.time-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.time-buttons button {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-buttons button:hover {
+  background: #3a3a3a;
+  border-color: #58a6ff;
+}
+
+.time-set-manual {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.time-set-manual input {
+  background: #222;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.time-set-manual button {
+  background: #58a6ff;
+  border: none;
+  color: #000;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.time-set-manual button:hover {
+  background: #7ab8ff;
+}
+
+.btn-danger {
+  background: #f44336 !important;
+  border: none !important;
+  color: #fff !important;
+  width: 100%;
+  padding: 10px !important;
+}
+
+.btn-danger:hover {
+  background: #ff5252 !important;
+}
+
+/* Indicateur jour/nuit dans le header */
+.rp-datetime.night {
+  background: linear-gradient(135deg, #0d0d1a, #1a1a2e);
+  border-color: #2a2a4a;
+}
+
+.rp-datetime.night .rp-time {
+  color: #b0b0ff;
+}
+
+.rp-datetime.day {
+  background: linear-gradient(135deg, #1a2a1a, #1a3a2a);
+  border-color: #2a4a2a;
+}
+
+.rp-datetime.day .rp-time {
+  color: #ffd700;
+}
+
+/* --- BARRE DE VIE --- */
+.hp-container {
+  margin: 10px 0;
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid #333;
+}
+
+.hp-bar {
+  height: 12px;
+  background: #333;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.hp-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.5s ease, background 0.3s;
+  box-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+
+.hp-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85em;
+}
+
+.hp-icon {
+  font-size: 1.1em;
+}
+
+.hp-value {
+  color: #eee;
+  flex: 1;
+}
+
+.hp-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.hp-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.hp-minus {
+  background: #f44336;
+  color: #fff;
+}
+
+.hp-minus:hover {
+  background: #ff5252;
+}
+
+.hp-plus {
+  background: #4caf50;
+  color: #fff;
+}
+
+.hp-plus:hover {
+  background: #66bb6a;
+}
+
+/* Animation dégâts */
+@keyframes damage-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.card-ko {
+  opacity: 0.7;
+  border-color: #9c27b0;
+  background: linear-gradient(135deg, #1a1a1a, #2a1a2a);
+}
+
+.card-ko .name {
+  color: #9c27b0;
+  text-decoration: line-through;
+}
+
+/* --- STATUTS --- */
+.status-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 8px 0;
+}
+
+.status-tag {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 500;
+}
+
+.status-bad {
+  background: #3a1a1a;
+  color: #f44336;
+  border: 1px solid #f44336;
+}
+
+.status-good {
+  background: #1a3a1a;
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.status-critical {
+  background: #2a1a3a;
+  color: #9c27b0;
+  border: 1px solid #9c27b0;
+}
+
+.status-neutral {
+  background: #2a2a2a;
+  color: #888;
+  border: 1px solid #444;
+}
+
+/* --- BOUTONS CARTE --- */
+.btn-details {
+  background: #58a6ff !important;
+  color: #000 !important;
+  font-weight: bold;
+}
+
+.btn-details:hover {
+  background: #7ab8ff !important;
+}
+
+.btn-danger-small {
+  background: #f44336 !important;
+  color: #fff !important;
+  min-width: 40px !important;
+  flex: 0 !important;
+}
+
+.btn-danger-small:hover {
+  background: #ff5252 !important;
+}
+
+/* --- MODAL DÉTAILS JOUEUR --- */
+.player-detail-header {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #333;
+}
+
+.player-avatar {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #58a6ff, #0078ff);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5em;
+}
+
+.player-main-info {
+  flex: 1;
+}
+
+.player-main-info h3 {
+  margin: 0;
+  color: #58a6ff;
+  font-size: 1.5em;
+}
+
+.player-main-info .player-subtitle {
+  color: #888;
+  margin: 5px 0;
+}
+
+.player-level-xp {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.player-level-xp .badge {
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85em;
+  font-weight: bold;
+}
+
+.badge-level {
+  background: linear-gradient(135deg, #ffd700, #ff9800);
+  color: #000;
+}
+
+.badge-xp {
+  background: #1a3a5a;
+  color: #58a6ff;
+  border: 1px solid #58a6ff;
+}
+
+/* Sections détail */
+.detail-section-player {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.detail-section-player h4 {
+  margin: 0 0 12px 0;
+  color: #ffcc66;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #222;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: #888;
+}
+
+.detail-value {
+  color: #eee;
+  font-weight: 500;
+}
+
+/* HP détaillé */
+.hp-detail-bar {
+  height: 25px;
+  background: #333;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  margin: 10px 0;
+}
+
+.hp-detail-fill {
+  height: 100%;
+  border-radius: 12px;
+  transition: width 0.5s;
+}
+
+.hp-detail-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 1px 1px 3px #000;
+}
+
+/* Actions dans les détails */
+.detail-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.detail-actions button {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.action-heal {
+  background: #4caf50;
+  color: #fff;
+}
+
+.action-heal:hover {
+  background: #66bb6a;
+}
+
+.action-damage {
+  background: #f44336;
+  color: #fff;
+}
+
+.action-damage:hover {
+  background: #ff5252;
+}
+
+.action-status {
+  background: #ff9800;
+  color: #000;
+}
+
+.action-status:hover {
+  background: #ffb74d;
+}
+
+.action-edit {
+  background: #2196f3;
+  color: #fff;
+}
+
+.action-edit:hover {
+  background: #42a5f5;
+}
+
+/* --- HP Quick Actions --- */
+.hp-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.hp-quick-actions button {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #4caf50;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.2s;
+}
+
+.hp-quick-actions button:hover {
+  background: #3a3a3a;
+  border-color: #4caf50;
+}
+
+.hp-quick-actions button.btn-dmg {
+  color: #f44336;
+}
+
+.hp-quick-actions button.btn-dmg:hover {
+  border-color: #f44336;
+}
+
+.hp-quick-actions button.btn-custom {
+  color: #58a6ff;
+}
+
+.hp-quick-actions button.btn-custom:hover {
+  border-color: #58a6ff;
+}
+
+/* --- Status Actions --- */
+.status-tags-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  min-height: 30px;
+}
+
+.status-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.status-actions button {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.status-actions button:hover {
+  background: #3a3a3a;
+}
+
+/* --- BARRES DE RESSOURCES --- */
+.resource-bars {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #333;
+}
+
+.resource-bar-container {
+  margin-bottom: 8px;
+}
+
+.resource-bar-container:last-child {
+  margin-bottom: 0;
+}
+
+.resource-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75em;
+  margin-bottom: 3px;
+  color: #aaa;
+}
+
+.resource-bar {
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.resource-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+/* HP - Rouge */
+.hp-bar-bg {
+  background: #3a1a1a;
+}
+
+.hp-fill-color {
+  background: linear-gradient(90deg, #f44336, #ff5722);
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+}
+
+/* Reiatsu - Bleu */
+.reiatsu-bar-bg {
+  background: #1a1a3a;
+}
+
+.reiatsu-fill-color {
+  background: linear-gradient(90deg, #2196f3, #00bcd4);
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.4);
+}
+
+/* Stamina - Jaune/Orange */
+.stamina-bar-bg {
+  background: #3a3a1a;
+}
+
+.stamina-fill-color {
+  background: linear-gradient(90deg, #ff9800, #ffc107);
+  box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
+}
+
+/* Animation basse ressource */
+@keyframes pulse-low {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.resource-fill.low {
+  animation: pulse-low 1s infinite;
+}
+
+/* --- STATS DÉTAILLÉES --- */
+.stats-detail-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-detail-item {
+  background: #222;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: help;
+}
+
+.stat-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.stat-detail-icon {
+  font-size: 1.2em;
+}
+
+.stat-detail-name {
+  flex: 1;
+  font-weight: 500;
+  color: #eee;
+}
+
+.stat-detail-value {
+  background: #58a6ff;
+  color: #000;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.stat-detail-desc {
+  font-size: 0.75em;
+  color: #888;
+  margin-top: 5px;
+}
+
+/* --- COMBAT STATS --- */
+.combat-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.combat-stat {
+  background: #222;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.combat-stat-icon {
+  font-size: 1.3em;
+}
+
+.combat-stat-name {
+  flex: 1;
+  font-size: 0.85em;
+  color: #aaa;
+}
+
+.combat-stat-value {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+/* --- RESSOURCES DÉTAILLÉES --- */
+.resource-detail {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #333;
+}
+
+.resource-detail:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.resource-detail-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+}
+
+.resource-bar-large {
+  height: 20px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.resource-fill-large {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+
+.resource-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.resource-actions button {
+  background: #2a3a2a;
+  border: 1px solid #4caf50;
+  color: #4caf50;
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: all 0.2s;
+}
+
+.resource-actions button:hover {
+  background: #3a4a3a;
+}
+
+.resource-actions button.btn-dmg {
+  background: #3a2a2a;
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.resource-actions button.btn-dmg:hover {
+  background: #4a3a3a;
+}
+
+.resource-info {
+  font-size: 0.75em;
+  color: #666;
+  font-style: italic;
+  margin-top: 5px;
+}
+
+/* --- BONUS DE RACE --- */
+.race-bonuses {
+  margin-bottom: 15px;
+}
+
+.race-bonus {
+  background: linear-gradient(135deg, #1a2a1a, #2a3a2a);
+  border: 1px solid #4a5a4a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 5px;
+  font-size: 0.85em;
+  color: #8bc34a;
+}
+
+/* --- ACTIONS DÉTAILS --- */
+.detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.detail-actions button {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9em;
+  transition: all 0.2s;
+}
+
+.action-heal {
+  background: linear-gradient(135deg, #4caf50, #8bc34a);
+  color: #000;
+}
+
+.action-heal:hover {
+  background: linear-gradient(135deg, #66bb6a, #9ccc65);
+}
+
+.action-damage {
+  background: linear-gradient(135deg, #f44336, #ff5722);
+  color: #fff;
+}
+
+.action-damage:hover {
+  background: linear-gradient(135deg, #ef5350, #ff7043);
+}
+
+.action-status {
+  background: linear-gradient(135deg, #ff9800, #ffc107);
+  color: #000;
+}
+
+.action-status:hover {
+  background: linear-gradient(135deg, #ffa726, #ffca28);
+}
+
+.action-edit {
+  background: linear-gradient(135deg, #2196f3, #03a9f4);
+  color: #fff;
+}
+
+.action-edit:hover {
+  background: linear-gradient(135deg, #42a5f5, #29b6f6);
+}
+
+@media (max-width: 500px) {
+  .detail-actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .combat-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* --- CONNEXION STATUS --- */
+#connectionStatus {
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.8em;
+  margin-left: 15px;
+}
+
+.status-connected {
+  background: #1a3a1a;
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.status-disconnected {
+  background: #3a1a1a;
+  color: #f44336;
+  border: 1px solid #f44336;
+}
+
+/* --- JOUEURS CONNECTÉS --- */
+.connected-players-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.connected-players-bar > span {
+  color: #888;
+  font-size: 0.85em;
+}
+
+#connectedPlayersList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.connected-player {
+  background: #2a2a2a;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  color: #aaa;
+  border: 1px solid #444;
+}
+
+.connected-player.me {
+  background: #1a3a1a;
+  color: #4caf50;
+  border-color: #4caf50;
+}
+
+/* --- INDICATEUR IA --- */
+#aiTypingIndicator {
+  padding: 10px;
+  text-align: center;
+  color: #ffcc66;
+  font-style: italic;
+}
+
+.typing-dots span {
+  animation: blink 1.4s infinite both;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* --- TOUR SYSTÈME --- */
+.turn-indicator {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.turn-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.turn-number {
+  background: #58a6ff;
+  color: #000;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.current-player .player-name {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.turn-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.turn-controls button {
+  background: #333;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.turn-controls button:hover {
+  background: #444;
+}
+
+.skip-btn {
+  background: #ff9800 !important;
+  color: #000 !important;
+}
+
+.turn-order {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #111;
+  border-radius: 8px;
+}
+
+.turn-player {
+  background: #222;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85em;
+  color: #888;
+  border: 1px solid #333;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.turn-player:hover {
+  background: #2a2a2a;
+}
+
+.turn-player.active {
+  background: #1a3a1a;
+  color: #4caf50;
+  border-color: #4caf50;
+  animation: pulse-turn 2s infinite;
+}
+
+.turn-player.played {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.turn-player .player-index {
+  background: #444;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75em;
+  margin-right: 5px;
+}
+
+.turn-player.active .player-index {
+  background: #4caf50;
+  color: #000;
+}
+
+@keyframes pulse-turn {
+  0%, 100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); }
+  50% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.6); }
+}
+
+/* --- SÉLECTION PERSONNAGE --- */
+.character-select-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  background: linear-gradient(135deg, #1a2a1a, #2a3a2a);
+  border: 1px solid #4caf50;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.character-select-bar label {
+  color: #4caf50;
+  font-weight: bold;
+  font-size: 0.95em;
+}
+
+.character-select-bar select {
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+  background: #222;
+  border: 1px solid #4caf50;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.character-select-bar select:focus {
+  outline: none;
+  border-color: #8bc34a;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+#myCharacterInfo {
+  color: #888;
+  font-size: 0.85em;
+  padding: 5px 10px;
+  background: #1a1a1a;
+  border-radius: 5px;
+}
+
+#myCharacterInfo.my-turn {
+  color: #ffd700;
+  font-weight: bold;
+  background: linear-gradient(135deg, #2a2a00, #3a3a00);
+  border: 1px solid #ffd700;
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+}
+
+.no-character-warning {
+  background: linear-gradient(135deg, #3a2a1a, #4a3a2a);
+  border: 1px solid #ff9800;
+  color: #ff9800;
+  padding: 10px 15px;
+  border-radius: 6px;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 0.9em;
+}
+
+/* --- ONGLETS CHAT --- */
+.chat-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 0;
+}
+
+.chat-tab {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-bottom: none;
+  color: #666;
+  padding: 12px 15px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.chat-tab:hover {
+  background: #222;
+  color: #aaa;
+}
+
+.chat-tab.active {
+  background: #101010;
+  color: #fff;
+  border-bottom-color: #101010;
+}
+
+#tabRP.active {
+  border-top-color: #58a6ff;
+  color: #58a6ff;
+}
+
+#tabOOC.active {
+  border-top-color: #ff9800;
+  color: #ff9800;
+}
+
+.badge-notif {
+  background: #f44336;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.7em;
+  margin-left: 5px;
+  animation: badge-pulse 1s infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* --- FENÊTRES CHAT --- */
+.chat-window {
+  background: #101010;
+  border: 1px solid #333;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+#oocWindow {
+  border-color: #ff9800;
+  background: #0f0f0a;
+}
+
+/* --- MESSAGES --- */
+.msg {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  max-width: 90%;
+  line-height: 1.4em;
+  position: relative;
+}
+
+.msg .msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 0.8em;
+}
+
+.msg .msg-author {
+  font-weight: bold;
+  color: #58a6ff;
+}
+
+.msg .msg-meta {
+  color: #666;
+  font-size: 0.75em;
+}
+
+.msg .msg-content {
+  color: #ddd;
+}
+
+.msg.joueur {
+  background: linear-gradient(135deg, #1a1a2a, #1a2030);
+  border-left: 3px solid #58a6ff;
+  margin-left: auto;
+}
+
+.msg.narrateur {
+  background: linear-gradient(135deg, #1a1a10, #202015);
+  border-left: 3px solid #ffcc66;
+  margin-right: auto;
+}
+
+.msg.system {
+  background: #1a1a00;
+  border-left: 3px solid #ffd700;
+  text-align: center;
+  color: #ffd700;
+  font-size: 0.9em;
+  max-width: 100%;
+}
+
+.msg.ooc {
+  background: linear-gradient(135deg, #2a2010, #302515);
+  border-left: 3px solid #ff9800;
+  font-style: italic;
+}
+
+.msg.ooc .msg-author {
+  color: #ff9800;
+}
+
+.msg.ooc::before {
+  content: '[OOC] ';
+  color: #ff9800;
+  font-weight: bold;
+}
+
+/* Message du personnage que TU joues */
+.msg.joueur.mine {
+  background: linear-gradient(135deg, #1a2a1a, #1a3020);
+  border-left-color: #4caf50;
+}
+
+.msg.joueur.mine .msg-author {
+  color: #4caf50;
+}
+
+/* --- CONTRÔLES CHAT --- */
+#chatControls, #oocControls {
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+#chatControls input, #oocControls input {
+  flex: 1;
+  min-width: 200px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 0.95em;
+}
+
+#chatControls input:focus, #oocControls input:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+#chatControls button, #oocControls button {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.2s;
+}
+
+#chatControls button:hover, #oocControls button:hover {
+  background: #3a3a3a;
+}
+
+#btnSendRP {
+  background: linear-gradient(135deg, #58a6ff, #3080df) !important;
+  color: #fff !important;
+  border: none !important;
+  font-weight: bold;
+}
+
+#btnSendRP:hover {
+  background: linear-gradient(135deg, #70b8ff, #4090ef) !important;
+}
+
+#btnSendRP:disabled {
+  background: #333 !important;
+  color: #666 !important;
+  cursor: not-allowed;
+}
+
+#oocControls input {
+  border-color: #ff9800;
+}
+
+#oocControls button {
+  background: #ff9800;
+  color: #000;
+  border: none;
+  font-weight: bold;
+}
+
+#oocControls button:hover {
+  background: #ffb74d;
+}
+
+/* --- INDICATEUR TOUR --- */
+.your-turn-banner {
+  background: linear-gradient(135deg, #1a3a1a, #2a4a2a);
+  border: 2px solid #4caf50;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 10px;
+  animation: pulse-glow 2s infinite;
+}
+
+.your-turn-banner span {
+  color: #4caf50;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+/* Quand ce n'est PAS ton tour */
+#chatControls.not-your-turn #chatMsg {
+  border-color: #ff9800;
+}
+
+#chatControls.not-your-turn #btnSendRP::after {
+  content: ' (pas ton tour)';
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+/* Animation notification */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
+/* Style pour "mon" personnage dans l'ordre des tours */
+.turn-player.mine {
+  background: linear-gradient(135deg, #1a3a1a, #2a4a2a) !important;
+  border-color: #4caf50 !important;
+  color: #4caf50 !important;
+}
+
+.turn-player.mine.active {
+  background: linear-gradient(135deg, #2a5a2a, #3a6a3a) !important;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+}
+
+/* Animation notification */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
+/* Status connexion amélioré */
+.status-connected {
+  background: linear-gradient(135deg, #1a3a1a, #2a4a2a);
+  color: #4caf50;
+  border: 1px solid #4caf50;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85em;
+}
+
+.status-disconnected {
+  background: linear-gradient(135deg, #3a1a1a, #4a2a2a);
+  color: #f44336;
+  border: 1px solid #f44336;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85em;
+}
+
+/* Joueurs connectés améliorés */
+.connected-player {
+  background: #2a2a2a;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  color: #aaa;
+  border: 1px solid #444;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.connected-player.me {
+  background: linear-gradient(135deg, #1a3a1a, #2a4a2a);
+  color: #4caf50;
+  border-color: #4caf50;
+  font-weight: bold;
+}
+
+/* Responsive pour mobile */
+@media (max-width: 600px) {
+  .character-select-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .character-select-bar select {
+    max-width: 100%;
+  }
+  
+  .chat-tabs {
+    flex-direction: row;
+  }
+  
+  .chat-tab {
+    padding: 10px 8px;
+    font-size: 0.8em;
+  }
+  
+  #chatControls, #oocControls {
+    flex-direction: column;
+  }
+  
+  #chatControls input, #oocControls input {
+    min-width: 100%;
+  }
+  
+  #chatControls button, #oocControls button {
+    width: 100%;
+  }
+  
+  .turn-indicator {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .turn-controls {
+    width: 100%;
+    justify-content: center;
+  }
+}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>BLEACH RP – Fiches Joueurs</h1>
+  <div class="header-left">
+    <h1>BLEACH RP – Fiches Joueurs</h1>
+    
+    <div class="rp-datetime">
+      <span class="rp-date" id="rpDate">📅 Vendredi 01 Avril</span>
+      <span class="rp-time" id="rpTime">🕐 12:00</span>
+      <button class="time-btn" onclick="openTimeControl()" title="Gérer le temps">⏱️</button>
+    </div>
+    <div id="connectionStatus" class="status-disconnected">🔴 Déconnecté</div>
+  </div>
   <div>
-    <button onclick="openNew()">+ Nouvelle fiche</button>
-    <button onclick="saveData()" title="Sauvegarder sur le serveur">💾 Sauvegarder</button>
+    <button onclick="openNew()">+ Nouvelle fiche</button>
+    <button onclick="saveData()" title="Sauvegarder sur le serveur">💾 Sauvegarder</button>
     <select id="rpSelect"></select>
-    <button onclick="openNPC()">NPC connus</button>
+    <button onclick="openNPC()">NPC connus</button>
   </div>
 </header>
 <!-- Barre latérale gauche -->
 <div id="sidebar">
   <button id="bestiaireBtn" onclick="openBestiaire()">📜 Bestiaire</button>
+  <button id="mapBtn" onclick="openMap()">🗺️ Map</button>
 </div>
 
 <main id="container"></main>
 <!-- Section Tchat RP -->
+<!-- Section Tchat RP avec Tour par Tour -->
+<!-- Section Tchat RP -->
 <section id="chatSection">
-  <h2 class="form-title">Salon RP</h2>
-  <div id="chatWindow"></div>
+  <h2 class="form-title">Salon RP</h2>
+  
+  <!-- Joueurs connectés -->
+  <div class="connected-players-bar">
+    <span>👥 En ligne :</span>
+    <div id="connectedPlayersList"></div>
+  </div>
+  
+  <!-- SÉLECTION DU PERSONNAGE -->
+  <div class="character-select-bar">
+    <label>🎭 Tu joues :</label>
+    <select id="myCharacterSelect" onchange="selectMyCharacter()">
+      <option value="-1">-- Choisir un personnage --</option>
+    </select>
+    <span id="myCharacterInfo"></span>
+  </div>
+  
+  <!-- Indicateur de tour -->
+  <div class="turn-indicator">
+    <div class="turn-info">
+      <span class="turn-number">Tour <span id="turnNumber">1</span></span>
+      <span class="current-player">
+        C'est au tour de : <span class="player-name" id="currentPlayerName">—</span>
+      </span>
+    </div>
+    <div class="turn-controls">
+      <button onclick="skipTurn()" class="skip-btn">⏭️ Passer</button>
+      <button onclick="resetTurns()">🔄 Reset</button>
+      <button onclick="toggleTurnSystem()">⚙️ <span id="turnToggleText">Désactiver</span></button>
+    </div>
+  </div>
+  
+  <!-- Ordre des joueurs -->
+  <div class="turn-order" id="turnOrder"></div>
+  
+  <!-- ONGLETS RP / OOC -->
+  <div class="chat-tabs">
+    <button class="chat-tab active" onclick="switchChatTab('rp')" id="tabRP">🎭 RP (In Character)</button>
+    <button class="chat-tab" onclick="switchChatTab('ooc')" id="tabOOC">💬 OOC (Hors RP) <span id="oocBadge" class="badge-notif" style="display:none;">!</span></button>
+  </div>
+  
+  <!-- Fenêtre de chat RP -->
+  <div id="chatWindow" class="chat-window active"></div>
+  
+  <!-- Fenêtre de chat OOC -->
+  <div id="oocWindow" class="chat-window" style="display:none;"></div>
+  
+  <!-- Indicateur IA en train d'écrire -->
+  <div id="aiTypingIndicator" style="display:none;">
+    <span class="typing-dots">🎭 Le MJ réfléchit<span>.</span><span>.</span><span>.</span></span>
+  </div>
 
+  <!-- Contrôles RP -->
   <div id="chatControls">
-    <input id="chatMsg" placeholder="Tape un message ou colle un passage du RP…" />
-    <button onclick="sendChat('joueur')">Envoyer</button>
-    <button onclick="sendChat('narrateur')">📜 Narration</button>
-    <button onclick="clearChat()">🗑️ Nettoyer</button>
+    <input id="chatMsg" placeholder="Écris ton action RP..." onkeypress="if(event.key==='Enter')sendChat('joueur')" />
+    <button onclick="sendChat('joueur')" id="btnSendRP">🎭 Envoyer (RP)</button>
+    <button onclick="sendChat('narrateur')" title="Message de narration (MJ)">📜 Narration</button>
+    <button onclick="clearChat()">🗑️</button>
+  </div>
+  
+  <!-- Contrôles OOC (cachés par défaut) -->
+  <div id="oocControls" style="display:none;">
+    <input id="oocMsg" placeholder="Message hors RP..." onkeypress="if(event.key==='Enter')sendOOC()" />
+    <button onclick="sendOOC()">💬 Envoyer</button>
+    <button onclick="clearOOC()">🗑️</button>
   </div>
 </section>
 <!-- Modal Nouvelle Fiche -->
@@ -834,65 +2974,920 @@ button.confirm:hover{background:#0099ff;}
     </div>
   </div>
 </div>
-<script>
-let allData={}, currentRP;
 
-async function loadData(){
-  const res=await fetch("/data/rp.json");
-  allData=await res.json();
-  const sel=document.getElementById("rpSelect");
-  sel.innerHTML="";
-  Object.keys(allData).forEach(id=>{
-    const opt=document.createElement("option");
-    opt.value=id; opt.textContent=allData[id].title;
-    sel.appendChild(opt);
-  });
-  sel.onchange=()=>showPlayers(allData[sel.value]);
-  showPlayers(allData[Object.keys(allData)[0]]);
-}
-
-function showPlayers(rp){
-  currentRP=rp;
-  const cont=document.getElementById("container");
-  cont.innerHTML="";
-  
-  rp.players.forEach((p,i)=>{
-    // Générer l'affichage des stats avec barres RELATIVES
-    let statsHTML = "";
-    if(p.stats){
-      const values = Object.values(p.stats);
-      const maxStat = Math.max(...values, 1);
+<!-- ===== MODALE : MAP ===== -->
+<div class="modal" id="mapModal">
+  <div class="modal-content" style="max-width:900px;">
+    <span class="close" onclick="closeMap()">&times;</span>
+    <h2 class="form-title">🗺️ Carte du Monde</h2>
+    
+    <!-- Sélection de région -->
+    <div class="map-regions">
+      <button class="region-btn active" onclick="selectMapRegion('monde_humain')">🌆 Monde Humain</button>
+      <button class="region-btn" onclick="selectMapRegion('soul_society')">⛩️ Soul Society</button>
+      <button class="region-btn" onclick="selectMapRegion('hueco_mundo')">🏜️ Hueco Mundo</button>
+      <button class="region-btn" onclick="selectMapRegion('autres')">🌀 Autres</button>
+    </div>
+    
+    <!-- Grille des lieux -->
+    <div class="map-container">
+      <div class="map-locations" id="mapLocations"></div>
       
-      statsHTML = `<div class="stats-grid">
-        <div class="stats-header">
-          <span>Stats</span>
-          <span class="max-indicator">Max: ${maxStat}</span>
+      <!-- Panneau de détails du lieu -->
+      <div class="location-details" id="locationDetails">
+        <div class="location-placeholder">
+          <span>👆</span>
+          <p>Sélectionnez un lieu pour voir les détails</p>
         </div>
-        ${Object.entries(p.stats).map(([k,v])=>{
-          const percent = (v / maxStat) * 100;
-          const color = getStatColor(percent);
-          return `
-          <div class="stat-item">
-            <span class="stat-name">${k}</span>
-            <div class="stat-bar">
-              <div class="stat-fill" style="width:${percent}%; background:${color}"></div>
-            </div>
-            <span class="stat-value">${v}</span>
-          </div>
-        `}).join("")}
-      </div>`;
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALE : CONTRÔLE DU TEMPS ===== -->
+<div class="modal" id="timeModal">
+  <div class="modal-content" style="max-width:500px;">
+    <span class="close" onclick="closeTimeControl()">&times;</span>
+    <h2 class="form-title">⏱️ Contrôle du Temps RP</h2>
+    
+    <div class="time-display">
+      <div class="time-current">
+        <span class="time-label">Date & Heure actuelles</span>
+        <div class="time-value" id="timeDisplayFull">Vendredi 01 Avril - 12:00</div>
+      </div>
+      <div class="time-tour">
+        <span class="time-label">Tour actuel</span>
+        <div class="time-value" id="timeDisplayTour">Tour 1</div>
+      </div>
+    </div>
+    
+    <div class="time-info">
+      <p>📖 <strong>Timeline du RP :</strong></p>
+      <ul>
+        <li>🟢 <strong>Tour 1 (01/04)</strong> - Début du RP</li>
+        <li>🔴 <strong>Vendredi 12/05 à 19:13</strong> - Rencontre Rukia/Ichigo</li>
+      </ul>
+      <p id="daysUntilEvent"></p>
+    </div>
+    
+    <div class="time-controls">
+      <h4>⏩ Avancer le temps</h4>
+      <div class="time-buttons">
+        <button onclick="advanceTime(0, 15)">+15 min</button>
+        <button onclick="advanceTime(0, 30)">+30 min</button>
+        <button onclick="advanceTime(1, 0)">+1 heure</button>
+        <button onclick="advanceTime(3, 0)">+3 heures</button>
+        <button onclick="advanceTime(6, 0)">+6 heures</button>
+        <button onclick="advanceTime(12, 0)">+12 heures</button>
+      </div>
+      <div class="time-buttons">
+        <button onclick="advanceDay(1)">+1 jour</button>
+        <button onclick="advanceDay(3)">+3 jours</button>
+        <button onclick="advanceDay(7)">+1 semaine</button>
+      </div>
+    </div>
+    
+    <div class="time-controls">
+      <h4>🌅 Aller à un moment</h4>
+      <div class="time-buttons">
+        <button onclick="setTimeOfDay(6, 0)">🌅 Aube (6h)</button>
+        <button onclick="setTimeOfDay(12, 0)">☀️ Midi (12h)</button>
+        <button onclick="setTimeOfDay(18, 0)">🌆 Soir (18h)</button>
+        <button onclick="setTimeOfDay(22, 0)">🌙 Nuit (22h)</button>
+      </div>
+    </div>
+    
+    <div class="time-controls">
+      <h4>📅 Définir une date précise</h4>
+      <div class="time-set-manual">
+        <input type="date" id="manualDate" />
+        <input type="time" id="manualTime" />
+        <button onclick="setManualDateTime()">Appliquer</button>
+      </div>
+    </div>
+    
+    <div class="time-controls">
+      <h4>🔄 Réinitialiser</h4>
+      <button onclick="resetRPTime()" class="btn-danger">Revenir au 01 Avril (Tour 1)</button>
+    </div>
+  </div>
+</div>
+<!-- ===== MODALE : DÉTAILS JOUEUR ===== -->
+<div class="modal" id="playerDetailModal">
+  <div class="modal-content" style="max-width:650px;">
+    <span class="close" onclick="closePlayerDetails()">&times;</span>
+    <h2 class="form-title" id="playerDetailTitle">📋 Détails du personnage</h2>
+    <div id="playerDetailContent"></div>
+  </div>
+</div>
+
+<script>
+// ===== VARIABLES GLOBALES =====
+let socket;
+let myPlayerName = '';
+let myCharacterIndex = -1;
+let currentChatTab = 'rp';
+let allData = {};
+let currentRP;
+let turnSystem = {
+  enabled: true,
+  currentTurn: 0,
+  roundNumber: 1,
+  playedThisRound: [],
+  history: []
+};
+
+// Temps RP
+const RP_START_DATE = new Date(2024, 3, 1, 12, 0);
+const RUKIA_EVENT_DATE = new Date(2024, 4, 12, 19, 13);
+let rpTime = {
+  date: new Date(RP_START_DATE),
+  tour: 1
+};
+
+// Jours/Mois
+const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+const MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+// Variables modales
+let currentInvIndex = -1;
+let currentTravelIndex = -1;
+let currentRegion = 'monde_humain';
+let currentDetailIndex = -1;
+let currentMapRegion = 'monde_humain';
+let selectedLocation = null;
+
+// ===== INITIALISATION =====
+document.addEventListener('DOMContentLoaded', () => {
+  initSocket();
+  requestNotificationPermission();
+});
+
+// ===== SOCKET.IO CLIENT =====
+function initSocket() {
+  socket = io();
+  
+  // Demander le nom du visiteur
+  myPlayerName = localStorage.getItem('visitorName');
+  if (!myPlayerName) {
+    myPlayerName = prompt("Entrez votre nom (vous, pas votre personnage):") || "Visiteur" + Math.floor(Math.random() * 1000);
+    localStorage.setItem('visitorName', myPlayerName);
+  }
+  
+  // Récupérer le personnage sauvegardé
+  const savedChar = localStorage.getItem('myCharacterIndex');
+  if (savedChar !== null) {
+    myCharacterIndex = parseInt(savedChar);
+  }
+  
+  // === CONNEXION ===
+  socket.on("connect", () => {
+    console.log("✅ Connecté au serveur");
+    socket.emit("joinGame", {
+      visitorName: myPlayerName,
+      characterIndex: myCharacterIndex
+    });
+    updateConnectionStatus(true);
+  });
+  
+  socket.on("disconnect", () => {
+    console.log("❌ Déconnecté");
+    updateConnectionStatus(false);
+  });
+  
+  // === ÉTAT INITIAL ===
+  socket.on("gameState", (state) => {
+    allData = state.rpData || {};
+    turnSystem = state.turnSystem || turnSystem;
+    
+    // Charger le RP
+    const sel = document.getElementById("rpSelect");
+    if (sel) {
+      sel.innerHTML = "";
+      Object.keys(allData).forEach(id => {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = allData[id].title;
+        sel.appendChild(opt);
+      });
+      
+      sel.onchange = () => {
+        currentRP = allData[sel.value];
+        showPlayers(currentRP);
+        initTurnSystem();
+        initRPTime();
+      };
     }
     
-    const c=document.createElement("div");
-    c.className="card";
-    c.innerHTML=`
+    currentRP = allData[state.currentRP] || allData[Object.keys(allData)[0]];
+    if (currentRP) {
+      showPlayers(currentRP);
+      updateCharacterSelect();
+      updateTurnDisplay();
+    }
+    
+    // Charger le chat RP
+    const chatWindow = document.getElementById("chatWindow");
+    if (chatWindow) {
+      chatWindow.innerHTML = "";
+      if (state.chat) {
+        state.chat.forEach(msg => addChatMessage(msg));
+      }
+    }
+    
+    // Charger le chat OOC
+    const oocWindow = document.getElementById("oocWindow");
+    if (oocWindow) {
+      oocWindow.innerHTML = "";
+      if (state.oocChat) {
+        state.oocChat.forEach(msg => addOOCMessage(msg));
+      }
+    }
+    
+    // Mettre à jour les joueurs connectés
+    if (state.connectedPlayers) {
+      updateConnectedPlayers(state.connectedPlayers);
+    }
+    
+    // Mettre à jour le temps RP
+    if (state.rpTime) {
+      rpTime = { 
+        date: new Date(state.rpTime.date), 
+        tour: state.rpTime.tour 
+      };
+      updateTimeDisplay();
+    }
+  });
+  
+  // === MESSAGES RP ===
+  socket.on("chatMessage", (msg) => {
+    addChatMessage(msg);
+  });
+  
+  // === MESSAGES OOC ===
+  socket.on("oocMessage", (msg) => {
+    addOOCMessage(msg);
+    
+    if (currentChatTab !== 'ooc') {
+      const badge = document.getElementById('oocBadge');
+      if (badge) badge.style.display = 'inline';
+    }
+  });
+  
+  // === IA EN TRAIN D'ÉCRIRE ===
+  socket.on("aiTyping", (isTyping) => {
+    const indicator = document.getElementById("aiTypingIndicator");
+    if (indicator) {
+      indicator.style.display = isTyping ? "block" : "none";
+    }
+  });
+  
+  // === TOUR CHANGÉ ===
+  socket.on("turnChanged", (data) => {
+    turnSystem = data.turnSystem;
+    updateTurnDisplay();
+    updateMyCharacterInfo();
+    
+    if (myCharacterIndex >= 0 && turnSystem.currentTurn === myCharacterIndex) {
+      showNotification("🎮 C'est ton tour !");
+      const myInfo = document.getElementById('myCharacterInfo');
+      if (myInfo) myInfo.classList.add('my-turn');
+    }
+  });
+  
+  // === JOUEUR MIS À JOUR ===
+  socket.on("playerUpdated", (data) => {
+    if (currentRP?.players?.[data.playerIndex]) {
+      currentRP.players[data.playerIndex] = data.player;
+      showPlayers(currentRP);
+      updateCharacterSelect();
+    }
+  });
+  
+  // === DONNÉES MISES À JOUR ===
+  socket.on("dataUpdated", (newData) => {
+    allData = newData;
+    currentRP = allData[Object.keys(allData)[0]];
+    showPlayers(currentRP);
+    updateCharacterSelect();
+  });
+  
+  // === JOUEURS CONNECTÉS ===
+  socket.on("playersUpdated", (players) => {
+    updateConnectedPlayers(players);
+  });
+  
+  // === CHAT VIDÉ ===
+  socket.on("chatCleared", () => {
+    const chatWindow = document.getElementById("chatWindow");
+    if (chatWindow) chatWindow.innerHTML = "";
+  });
+  
+  // === OOC VIDÉ ===
+  socket.on("oocCleared", () => {
+    const oocWindow = document.getElementById("oocWindow");
+    if (oocWindow) oocWindow.innerHTML = "";
+  });
+  
+  // === TEMPS RP MIS À JOUR ===
+  socket.on("rpTimeUpdated", (newTime) => {
+    rpTime = { date: new Date(newTime.date), tour: newTime.tour };
+    updateTimeDisplay();
+  });
+}
+
+// ===== UTILITAIRES =====
+
+function formatTime(timestamp) {
+  if (!timestamp) return '';
+  
+  try {
+    const d = new Date(timestamp);
+    if (isNaN(d.getTime())) {
+      console.warn('Invalid timestamp:', timestamp);
+      return '';
+    }
+    
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } catch (e) {
+    console.error('Error formatting time:', e);
+    return '';
+  }
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  if (typeof text !== 'string') return String(text);
+  
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showNotification(text) {
+  // Browser notification
+  if ("Notification" in window && Notification.permission === "granted") {
+    try {
+      new Notification("Bleach RP", { body: text, icon: '🎭' });
+    } catch (e) {
+      console.log('Notification error:', e);
+    }
+  }
+  
+  // Visual notification
+  const banner = document.createElement('div');
+  banner.className = 'notification-banner';
+  banner.innerHTML = `<span>${escapeHtml(text)}</span>`;
+  banner.style.cssText = `
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: linear-gradient(135deg, #1a3a1a, #2a5a2a);
+    border: 2px solid #4caf50;
+    color: #4caf50;
+    padding: 15px 30px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1.1em;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    animation: fadeInOut 3s forwards;
+  `;
+  document.body.appendChild(banner);
+  
+  setTimeout(() => {
+    if (banner.parentNode) {
+      banner.remove();
+    }
+  }, 3000);
+}
+
+function updateConnectionStatus(connected) {
+  const status = document.getElementById("connectionStatus");
+  if (status) {
+    status.innerHTML = connected 
+      ? `🟢 ${myPlayerName}`
+      : '🔴 Déconnecté';
+    status.className = connected ? 'status-connected' : 'status-disconnected';
+  }
+}
+
+function updateConnectedPlayers(players) {
+  const list = document.getElementById("connectedPlayersList");
+  if (!list) return;
+  
+  if (!players || !Array.isArray(players)) {
+    list.innerHTML = '<span class="connected-player">Aucun joueur</span>';
+    return;
+  }
+  
+  list.innerHTML = players.map(p => {
+    const isMe = p.visitorName === myPlayerName;
+    const character = (p.characterIndex >= 0 && currentRP?.players?.[p.characterIndex]) 
+      ? currentRP.players[p.characterIndex] 
+      : null;
+    const charName = character ? character.name : null;
+    
+    let display = p.visitorName || 'Anonyme';
+    if (charName) {
+      display += ` → ${charName}`;
+    }
+    
+    return `
+      <span class="connected-player ${isMe ? 'me' : ''}" title="${charName ? 'Joue: ' + charName : 'Pas de personnage sélectionné'}">
+        ${escapeHtml(display)}
+      </span>
+    `;
+  }).join('');
+}
+
+function requestNotificationPermission() {
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission().then(permission => {
+      console.log('Notification permission:', permission);
+    });
+  }
+}
+
+// ===== SÉLECTION DE PERSONNAGE =====
+
+function updateCharacterSelect() {
+  const select = document.getElementById('myCharacterSelect');
+  if (!select || !currentRP?.players) return;
+  
+  const previousValue = select.value;
+  
+  select.innerHTML = '<option value="-1">-- Choisir un personnage --</option>';
+  
+  currentRP.players.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${p.name} (${p.species || 'Inconnu'}) - Niv.${p.level || 1}`;
+    
+    if (turnSystem.enabled && turnSystem.currentTurn === i) {
+      opt.textContent += ' ⭐ (son tour)';
+    }
+    
+    select.appendChild(opt);
+  });
+  
+  if (myCharacterIndex >= 0 && myCharacterIndex < currentRP.players.length) {
+    select.value = myCharacterIndex;
+  } else if (previousValue !== '-1' && parseInt(previousValue) < currentRP.players.length) {
+    select.value = previousValue;
+    myCharacterIndex = parseInt(previousValue);
+  }
+  
+  updateMyCharacterInfo();
+}
+
+// ===== SUITE DU CODE CORRIGÉ =====
+
+function selectMyCharacter() {
+  const select = document.getElementById('myCharacterSelect');
+  myCharacterIndex = parseInt(select.value);
+  
+  localStorage.setItem('myCharacterIndex', myCharacterIndex);
+  
+  if (socket) {
+    socket.emit("selectCharacter", myCharacterIndex);
+  }
+  
+  updateMyCharacterInfo();
+  updateTurnDisplay();
+  
+  if (myCharacterIndex >= 0 && currentRP?.players?.[myCharacterIndex]) {
+    const pj = currentRP.players[myCharacterIndex];
+    appendSystemMsg(`🎭 Tu incarnes maintenant ${pj.name}`);
+  }
+}
+
+function updateMyCharacterInfo() {
+  const info = document.getElementById('myCharacterInfo');
+  const sendBtn = document.getElementById('btnSendRP');
+  const chatInput = document.getElementById('chatMsg');
+  const controls = document.getElementById('chatControls');
+  
+  if (!info) return;
+  
+  if (myCharacterIndex < 0 || !currentRP?.players?.[myCharacterIndex]) {
+    info.innerHTML = '<span style="color:#f44336;">⚠️ Sélectionne un personnage</span>';
+    info.classList.remove('my-turn');
+    
+    if (chatInput) chatInput.placeholder = "Sélectionne d'abord un personnage...";
+    if (sendBtn) sendBtn.disabled = true;
+    if (controls) controls.classList.remove('not-your-turn');
+    return;
+  }
+  
+  const pj = currentRP.players[myCharacterIndex];
+  const isMyTurn = turnSystem.enabled && turnSystem.currentTurn === myCharacterIndex;
+  
+  if (sendBtn) sendBtn.disabled = false;
+  
+  if (isMyTurn) {
+    info.innerHTML = `✨ <strong style="color:#4caf50;">C'EST TON TOUR !</strong> | ❤️ ${pj.hp}/${pj.maxHp} | 📍 ${pj.location || 'Inconnu'}`;
+    info.classList.add('my-turn');
+    
+    if (chatInput) chatInput.placeholder = `C'est ton tour ! Que fait ${pj.name} ?`;
+    if (controls) controls.classList.remove('not-your-turn');
+  } else if (turnSystem.enabled) {
+    const currentPlayer = currentRP.players[turnSystem.currentTurn];
+    info.innerHTML = `⏳ Tour de ${currentPlayer?.name || '?'} | ❤️ ${pj.hp}/${pj.maxHp} | 📍 ${pj.location || 'Inconnu'}`;
+    info.classList.remove('my-turn');
+    
+    if (chatInput) chatInput.placeholder = `En attente... (tour de ${currentPlayer?.name || '?'})`;
+    if (controls) controls.classList.add('not-your-turn');
+  } else {
+    info.innerHTML = `🆓 Mode libre | ❤️ ${pj.hp}/${pj.maxHp} | 📍 ${pj.location || 'Inconnu'}`;
+    info.classList.remove('my-turn');
+    
+    if (chatInput) chatInput.placeholder = `Que fait ${pj.name} ?`;
+    if (controls) controls.classList.remove('not-your-turn');
+  }
+}
+
+// ===== SYSTÈME DE CHAT =====
+
+function switchChatTab(tab) {
+  currentChatTab = tab;
+  
+  const tabRP = document.getElementById('tabRP');
+  const tabOOC = document.getElementById('tabOOC');
+  const chatWindow = document.getElementById('chatWindow');
+  const oocWindow = document.getElementById('oocWindow');
+  const chatControls = document.getElementById('chatControls');
+  const oocControls = document.getElementById('oocControls');
+  const oocBadge = document.getElementById('oocBadge');
+  
+  if (tabRP) tabRP.classList.toggle('active', tab === 'rp');
+  if (tabOOC) tabOOC.classList.toggle('active', tab === 'ooc');
+  if (chatWindow) chatWindow.style.display = tab === 'rp' ? 'block' : 'none';
+  if (oocWindow) oocWindow.style.display = tab === 'ooc' ? 'block' : 'none';
+  if (chatControls) chatControls.style.display = tab === 'rp' ? 'flex' : 'none';
+  if (oocControls) oocControls.style.display = tab === 'ooc' ? 'flex' : 'none';
+  
+  if (tab === 'ooc' && oocBadge) {
+    oocBadge.style.display = 'none';
+  }
+  
+  const activeWindow = tab === 'rp' ? chatWindow : oocWindow;
+  if (activeWindow) activeWindow.scrollTop = activeWindow.scrollHeight;
+}
+
+function sendChat(type) {
+  const msgField = document.getElementById("chatMsg");
+  const txt = msgField.value.trim();
+  if (!txt) return;
+  
+  if (type === 'joueur') {
+    if (myCharacterIndex < 0 || !currentRP?.players?.[myCharacterIndex]) {
+      alert("⚠️ Sélectionne d'abord un personnage pour envoyer un message RP !");
+      return;
+    }
+    
+    if (turnSystem.enabled && turnSystem.currentTurn !== myCharacterIndex) {
+      const currentPlayer = currentRP.players[turnSystem.currentTurn];
+      if (!confirm(`⚠️ Ce n'est pas ton tour ! C'est au tour de ${currentPlayer?.name}.\n\nEnvoyer quand même ?`)) {
+        return;
+      }
+    }
+  }
+  
+  msgField.value = "";
+  
+  const character = myCharacterIndex >= 0 ? currentRP.players[myCharacterIndex] : null;
+  const characterName = character ? character.name : myPlayerName;
+  
+  if (socket) {
+    socket.emit("sendMessage", {
+      type: type,
+      text: txt,
+      characterName: characterName,
+      characterIndex: myCharacterIndex
+    });
+    
+    if (type === 'joueur' && turnSystem.enabled && turnSystem.currentTurn === myCharacterIndex) {
+      socket.emit("nextTurn");
+    }
+  }
+}
+
+function sendOOC() {
+  const msgField = document.getElementById("oocMsg");
+  const txt = msgField.value.trim();
+  if (!txt) return;
+  
+  msgField.value = "";
+  
+  if (socket) {
+    socket.emit("sendOOC", {
+      text: txt,
+      author: myPlayerName
+    });
+  }
+}
+
+function addChatMessage(msg) {
+  const win = document.getElementById("chatWindow");
+  if (!win) return;
+  
+  const div = document.createElement("div");
+  const isMyMessage = msg.characterIndex === myCharacterIndex && myCharacterIndex >= 0;
+  
+  if (msg.type === 'system') {
+    div.className = "msg system";
+    div.innerHTML = msg.text;
+  } else if (msg.type === 'joueur') {
+    div.className = `msg joueur${isMyMessage ? ' mine' : ''}`;
+    div.innerHTML = `
+      <div class="msg-header">
+        <span class="msg-author">🎭 ${msg.author || 'Inconnu'}</span>
+        <span class="msg-meta">Tour ${msg.turn || '?'} • ${formatTime(msg.timestamp)}</span>
+      </div>
+      <div class="msg-content">${escapeHtml(msg.text)}</div>
+    `;
+  } else if (msg.type === 'narrateur') {
+    div.className = "msg narrateur";
+    div.innerHTML = `
+      <div class="msg-header">
+        <span class="msg-author">📜 ${msg.author || 'Narrateur'}</span>
+        <span class="msg-meta">Tour ${msg.turn || '?'}</span>
+      </div>
+      <div class="msg-content">${escapeHtml(msg.text)}</div>
+    `;
+  } else {
+    div.className = "msg";
+    div.innerHTML = msg.text;
+  }
+  
+  win.appendChild(div);
+  win.scrollTop = win.scrollHeight;
+}
+
+function addOOCMessage(msg) {
+  const win = document.getElementById("oocWindow");
+  if (!win) return;
+  
+  const div = document.createElement("div");
+  div.className = "msg ooc";
+  
+  const isMyMessage = msg.author === myPlayerName;
+  
+  div.innerHTML = `
+    <div class="msg-header">
+      <span class="msg-author">${isMyMessage ? '👤 Toi' : msg.author || 'Anonyme'}</span>
+      <span class="msg-meta">${formatTime(msg.timestamp)}</span>
+    </div>
+    <div class="msg-content">${escapeHtml(msg.text)}</div>
+  `;
+  
+  if (isMyMessage) {
+    div.style.marginLeft = 'auto';
+    div.style.background = 'linear-gradient(135deg, #2a3020, #303525)';
+  }
+  
+  win.appendChild(div);
+  win.scrollTop = win.scrollHeight;
+}
+
+function appendSystemMsg(text) {
+  const win = document.getElementById("chatWindow");
+  if (!win) return;
+  
+  const div = document.createElement("div");
+  div.className = "msg system";
+  div.innerHTML = text;
+  win.appendChild(div);
+  win.scrollTop = win.scrollHeight;
+}
+
+function appendMsg(role, text) {
+  if (role === 'system') {
+    appendSystemMsg(text);
+  } else {
+    addChatMessage({
+      type: role,
+      text: text,
+      author: role === 'narrateur' ? '📜 MJ' : 'Système',
+      turn: turnSystem?.roundNumber || 1,
+      timestamp: new Date().toISOString()
+    });
+  }
+}
+
+function clearChat() {
+  if (confirm("Vider le salon RP ?")) {
+    if (socket) socket.emit("clearChat");
+  }
+}
+
+function clearOOC() {
+  if (confirm("Vider le chat OOC ?")) {
+    if (socket) socket.emit("clearOOC");
+  }
+}
+
+// ===== SYSTÈME DE TOURS =====
+
+function initTurnSystem() {
+  if (!currentRP || !currentRP.players || currentRP.players.length === 0) {
+    const turnIndicator = document.querySelector('.turn-indicator');
+    const turnOrder = document.querySelector('.turn-order');
+    if (turnIndicator) turnIndicator.style.display = 'none';
+    if (turnOrder) turnOrder.style.display = 'none';
+    return;
+  }
+  
+  const turnIndicator = document.querySelector('.turn-indicator');
+  const turnOrder = document.querySelector('.turn-order');
+  if (turnIndicator) turnIndicator.style.display = 'flex';
+  if (turnOrder) turnOrder.style.display = 'flex';
+  
+  turnSystem.currentTurn = 0;
+  turnSystem.roundNumber = 1;
+  turnSystem.playedThisRound = [];
+  
+  updateTurnDisplay();
+}
+
+function updateTurnDisplay() {
+  const turnIndicator = document.querySelector('.turn-indicator');
+  const turnOrderEl = document.querySelector('.turn-order');
+  
+  if (!currentRP?.players || currentRP.players.length === 0) {
+    if (turnIndicator) turnIndicator.style.display = 'none';
+    if (turnOrderEl) turnOrderEl.style.display = 'none';
+    return;
+  }
+  
+  if (turnIndicator) turnIndicator.style.display = 'flex';
+  if (turnOrderEl) turnOrderEl.style.display = 'flex';
+  
+  const players = currentRP.players;
+  const currentPlayer = players[turnSystem.currentTurn];
+  
+  const turnNumber = document.getElementById('turnNumber');
+  const currentPlayerName = document.getElementById('currentPlayerName');
+  const turnToggleText = document.getElementById('turnToggleText');
+  const orderDiv = document.getElementById('turnOrder');
+  
+  if (turnNumber) turnNumber.innerText = turnSystem.roundNumber;
+  if (currentPlayerName) currentPlayerName.innerText = currentPlayer?.name || '—';
+  if (turnToggleText) turnToggleText.innerText = turnSystem.enabled ? 'Désactiver' : 'Activer';
+  
+  if (orderDiv) {
+    orderDiv.innerHTML = players.map((p, i) => {
+      let classes = 'turn-player';
+      if (i === turnSystem.currentTurn && turnSystem.enabled) classes += ' active';
+      if (turnSystem.playedThisRound.includes(i)) classes += ' played';
+      if (i === myCharacterIndex) classes += ' mine';
+      
+      return `
+        <div class="${classes}" onclick="jumpToPlayer(${i})" title="Cliquer pour passer à ce joueur (MJ)">
+          <span class="player-index">${i + 1}</span>
+          ${p.name}
+          ${i === myCharacterIndex ? ' (toi)' : ''}
+        </div>
+      `;
+    }).join('');
+  }
+  
+  updateMyCharacterInfo();
+  updateCharacterSelect();
+}
+
+function jumpToPlayer(index) {
+  if (!turnSystem.enabled) return;
+  
+  const player = currentRP.players[index];
+  if (confirm(`Passer directement au tour de ${player.name} ?`)) {
+    turnSystem.currentTurn = index;
+    if (socket) socket.emit("setTurn", index);
+    appendSystemMsg(`🎯 C'est maintenant au tour de ${player.name}.`);
+    updateTurnDisplay();
+  }
+}
+
+function skipTurn() {
+  if (socket) socket.emit("skipTurn");
+}
+
+function resetTurns() {
+  if (confirm("Réinitialiser les tours ?")) {
+    if (socket) socket.emit("resetTurns");
+  }
+}
+
+function toggleTurnSystem() {
+  if (socket) socket.emit("toggleTurnSystem");
+}
+
+function nextTurn() {
+  if (!currentRP || !currentRP.players || currentRP.players.length === 0) return;
+  
+  const players = currentRP.players;
+  
+  if (!turnSystem.playedThisRound.includes(turnSystem.currentTurn)) {
+    turnSystem.playedThisRound.push(turnSystem.currentTurn);
+  }
+  
+  turnSystem.currentTurn = (turnSystem.currentTurn + 1) % players.length;
+  
+  if (turnSystem.currentTurn === 0) {
+    turnSystem.roundNumber++;
+    turnSystem.playedThisRound = [];
+    advanceTimeOnTurn(5);
+    rpTime.tour = turnSystem.roundNumber;
+    appendMsg('system', `═══════════ 🔄 TOUR ${turnSystem.roundNumber} ═══════════`);
+    checkSpecialEvents();
+  }
+  
+  updateTurnDisplay();
+  updateTimeDisplay();
+}
+
+// ===== AFFICHAGE DES JOUEURS =====
+
+// ===== SUITE DU CODE CORRIGÉ (PARTIE 3) =====
+
+function showPlayers(rp) {
+  if (!rp) return;
+  
+  currentRP = rp;
+  const cont = document.getElementById("container");
+  if (!cont) return;
+  
+  cont.innerHTML = "";
+  
+  if (!rp.players) rp.players = [];
+  
+  rp.players.forEach((p, i) => {
+    // Initialiser les valeurs manquantes
+    if (p.hp === undefined) p.hp = 100;
+    if (p.maxHp === undefined) p.maxHp = 100;
+    if (p.reiatsu === undefined) p.reiatsu = 50;
+    if (p.maxReiatsu === undefined) p.maxReiatsu = 50;
+    if (p.stamina === undefined) p.stamina = 50;
+    if (p.maxStamina === undefined) p.maxStamina = 50;
+    if (!p.status) p.status = [];
+    
+    const hpPercent = Math.max(0, Math.min(100, (p.hp / p.maxHp) * 100));
+    const reiatsuPercent = Math.max(0, Math.min(100, (p.reiatsu / p.maxReiatsu) * 100));
+    const staminaPercent = Math.max(0, Math.min(100, (p.stamina / p.maxStamina) * 100));
+    
+    const statusHTML = p.status.length > 0 
+      ? `<div class="status-tags">${p.status.map(s => `<span class="status-tag ${getStatusClass(s)}">${getStatusIcon(s)} ${s}</span>`).join('')}</div>`
+      : '';
+    
+    const c = document.createElement("div");
+    c.className = "card";
+    if (p.hp <= 0) c.classList.add('card-ko');
+    
+    c.innerHTML = `
       <div class="card-header">
         <div class="name">${p.name}</div>
         <div class="level-badge">Niv. ${p.level || 1}</div>
       </div>
       <div class="species">${p.species}</div>
       
-      <!-- ⬇️ NOUVEAU : Affichage de l'emplacement -->
+      <div class="resource-bars">
+        <div class="resource-bar-container">
+          <div class="resource-label">
+            <span>${p.hp <= 0 ? '💀' : '❤️'} HP</span>
+            <span>${p.hp}/${p.maxHp}</span>
+          </div>
+          <div class="resource-bar hp-bar-bg">
+            <div class="resource-fill hp-fill-color" style="width:${hpPercent}%"></div>
+          </div>
+        </div>
+        
+        <div class="resource-bar-container">
+          <div class="resource-label">
+            <span>🔵 Reiatsu</span>
+            <span>${p.reiatsu}/${p.maxReiatsu}</span>
+          </div>
+          <div class="resource-bar reiatsu-bar-bg">
+            <div class="resource-fill reiatsu-fill-color" style="width:${reiatsuPercent}%"></div>
+          </div>
+        </div>
+        
+        <div class="resource-bar-container">
+          <div class="resource-label">
+            <span>🟡 Stamina</span>
+            <span>${p.stamina}/${p.maxStamina}</span>
+          </div>
+          <div class="resource-bar stamina-bar-bg">
+            <div class="resource-fill stamina-fill-color" style="width:${staminaPercent}%"></div>
+          </div>
+        </div>
+      </div>
+      
+      ${statusHTML}
+      
       <div class="location-info">
         <span class="location-icon">📍</span>
         <span class="location-name">${p.location || "Inconnu"}</span>
@@ -902,42 +3897,139 @@ function showPlayers(rp){
         <div class="xp-fill" style="width:${(p.xp || 0) % 100}%"></div>
         <span class="xp-text">XP: ${p.xp || 0}/100</span>
       </div>
-      <div>Âge : ${p.age||"?"}</div>
-      <div>Langues : ${p.languages||"-"}</div>
-      <div><b>Compétences</b> : ${p.skills||"-"}</div>
-      <div><b>Personnalité</b> : ${p.traits||"-"}</div>
-      <div><b>But</b> : ${p.goals||"-"}</div>
-      ${statsHTML}
+      
       <div class="card-buttons">
-        <button class='btn' onclick='openInventory(${i})'>🎒 Inventaire</button>
-        <button class='btn' onclick='openTravel(${i})'>🚶 Déplacement</button>
-        <button class='btn' onclick='addXP(${i})'>⭐ +10 XP</button>
-        <button class='btn' onclick='deleteCard(${i})'>🗑️ Supprimer</button>
+        <button class='btn btn-details' onclick='openPlayerDetails(${i})'>📋 Détails</button>
+        <button class='btn' onclick='openInventory(${i})'>🎒</button>
+        <button class='btn' onclick='openTravel(${i})'>🚶</button>
+        <button class='btn' onclick='addXP(${i})'>⭐</button>
+        <button class='btn btn-danger-small' onclick='deleteCard(${i})'>🗑️</button>
       </div>
     `;
     cont.appendChild(c);
   });
+  
+  if (typeof updateTurnDisplay === 'function') {
+    updateTurnDisplay();
+  }
 }
 
-// Couleur dynamique selon le pourcentage relatif
-function getStatColor(percent){
-  if(percent >= 90) return 'linear-gradient(90deg, #ffd700, #ffaa00)'; // Or - Max
-  if(percent >= 70) return 'linear-gradient(90deg, #4caf50, #8bc34a)'; // Vert - Haut
-  if(percent >= 50) return 'linear-gradient(90deg, #2196f3, #00bcd4)'; // Bleu - Moyen
-  if(percent >= 30) return 'linear-gradient(90deg, #ff9800, #ffc107)'; // Orange - Bas
-  return 'linear-gradient(90deg, #f44336, #ff5722)'; // Rouge - Très bas
+// ===== FONCTIONS UTILITAIRES POUR LES STATS =====
+
+function getHpColor(percent) {
+  if (percent > 70) return 'linear-gradient(90deg, #4caf50, #8bc34a)';
+  if (percent > 40) return 'linear-gradient(90deg, #ff9800, #ffc107)';
+  if (percent > 15) return 'linear-gradient(90deg, #f44336, #ff5722)';
+  return 'linear-gradient(90deg, #9c27b0, #673ab7)';
 }
 
-function addXP(i){
+function getStatusClass(status) {
+  const s = status.toLowerCase();
+  if (['empoisonné', 'poison', 'brûlé', 'saignement'].includes(s)) return 'status-bad';
+  if (['soigné', 'bouclier', 'buff', 'renforcé'].includes(s)) return 'status-good';
+  if (['ko', 'mort', 'inconscient'].includes(s)) return 'status-critical';
+  return 'status-neutral';
+}
+
+function getStatusIcon(status) {
+  const icons = {
+    'empoisonné': '🤢',
+    'poison': '🤢',
+    'brûlé': '🔥',
+    'saignement': '🩸',
+    'soigné': '💚',
+    'bouclier': '🛡️',
+    'buff': '⬆️',
+    'renforcé': '💪',
+    'ko': '💀',
+    'mort': '☠️',
+    'inconscient': '😵',
+    'fatigué': '😴',
+    'paralysé': '⚡',
+    'gelé': '❄️',
+    'confus': '😵‍💫'
+  };
+  return icons[status.toLowerCase()] || '❓';
+}
+
+function getStatColor(percent) {
+  if (percent >= 90) return 'linear-gradient(90deg, #ffd700, #ffaa00)';
+  if (percent >= 70) return 'linear-gradient(90deg, #4caf50, #8bc34a)';
+  if (percent >= 50) return 'linear-gradient(90deg, #2196f3, #00bcd4)';
+  if (percent >= 30) return 'linear-gradient(90deg, #ff9800, #ffc107)';
+  return 'linear-gradient(90deg, #f44336, #ff5722)';
+}
+
+// ===== SYNCHRONISATION AVEC LE SERVEUR =====
+
+function syncPlayerUpdate(playerIndex) {
+  const player = currentRP.players[playerIndex];
+  if (socket) {
+    socket.emit("updatePlayer", {
+      playerIndex: playerIndex,
+      updates: player
+    });
+  }
+}
+
+function changeHP(index, amount) {
+  const pj = currentRP.players[index];
+  const oldHp = pj.hp;
+  
+  pj.hp = Math.max(0, Math.min(pj.maxHp, pj.hp + amount));
+  
+  if (pj.hp <= 0 && oldHp > 0) {
+    if (!pj.status.includes('KO')) pj.status.push('KO');
+  } else if (pj.hp > 0 && pj.status.includes('KO')) {
+    pj.status = pj.status.filter(s => s !== 'KO');
+  }
+  
+  showPlayers(currentRP);
+  syncPlayerUpdate(index);
+}
+
+// ===== GESTION DES RESSOURCES =====
+
+function modifyResource(resource, amount) {
+  if (currentDetailIndex < 0) return;
+  const pj = currentRP.players[currentDetailIndex];
+  
+  const maxKey = 'max' + resource.charAt(0).toUpperCase() + resource.slice(1);
+  const maxValue = pj[maxKey] || 100;
+  
+  if (amount === 999) {
+    pj[resource] = maxValue;
+  } else {
+    pj[resource] = Math.max(0, Math.min(maxValue, (pj[resource] || 0) + amount));
+  }
+  
+  if (resource === 'hp') {
+    if (pj.hp <= 0 && !pj.status.includes('KO')) {
+      pj.status.push('KO');
+    } else if (pj.hp > 0) {
+      pj.status = pj.status.filter(s => s !== 'KO');
+    }
+  }
+  
+  openPlayerDetails(currentDetailIndex);
+  showPlayers(currentRP);
+  syncPlayerUpdate(currentDetailIndex);
+}
+
+// ===== XP ET LEVEL UP =====
+
+function addXP(i) {
   const pj = currentRP.players[i];
   pj.xp = (pj.xp || 0) + 10;
   
-  // Level up tous les 100 XP
-  if(pj.xp >= 100){
+  if (pj.xp >= 100) {
     pj.level = (pj.level || 1) + 1;
     pj.xp = pj.xp - 100;
     
-    // Augmenter une stat aléatoire de 1-3 points
+    if (!pj.stats) {
+      pj.stats = { Reiatsu: 5, Endurance: 5, Hakuda: 5, Defense: 5, Hoho: 5, Intellect: 5 };
+    }
+    
     const statKeys = Object.keys(pj.stats);
     const randomKey = statKeys[Math.floor(Math.random() * statKeys.length)];
     const bonus = Math.floor(Math.random() * 3) + 1;
@@ -947,98 +4039,248 @@ function addXP(i){
   }
   
   showPlayers(currentRP);
+  syncPlayerUpdate(i);
 }
 
-// ----- CREATE FORM -----
-function openNew(){
-  const modal=document.getElementById("newModal");
-  genAgeOptions(1); // valeurs par défaut humain‑like
-  modal.style.display="flex";
-  // adapter âge selon espèce
-  document.getElementById("newSpecies").onchange=updateAgeChoices;
-}
-function closeNew(){document.getElementById("newModal").style.display="none";}
+// ===== CRÉATION DE PERSONNAGE =====
 
-function genAgeOptions(max,step=1){
-  const sel=document.getElementById("newAge");
-  sel.innerHTML="";
-  if(max>1000){ sel.innerHTML="<option>50</option><option>100</option><option>500</option><option>1000</option><option>5000</option><option>10000+</option>"; return;}
-  for(let i=1;i<=max;i+=step){
-    const o=document.createElement("option");
-    o.text=i; o.value=i;
+function openNew() {
+  const modal = document.getElementById("newModal");
+  if (modal) {
+    genAgeOptions(100);
+    modal.style.display = "flex";
+    
+    const speciesSelect = document.getElementById("newSpecies");
+    if (speciesSelect) {
+      speciesSelect.onchange = updateAgeChoices;
+    }
+  }
+}
+
+function closeNew() {
+  const modal = document.getElementById("newModal");
+  if (modal) modal.style.display = "none";
+}
+
+function genAgeOptions(max, step = 1) {
+  const sel = document.getElementById("newAge");
+  if (!sel) return;
+  
+  sel.innerHTML = "";
+  if (max > 1000) {
+    sel.innerHTML = "<option>50</option><option>100</option><option>500</option><option>1000</option><option>5000</option><option>10000+</option>";
+    return;
+  }
+  for (let i = 1; i <= max; i += step) {
+    const o = document.createElement("option");
+    o.text = i;
+    o.value = i;
     sel.appendChild(o);
   }
 }
 
-function updateAgeChoices(){
-  const vals=Array.from(document.getElementById("newSpecies").selectedOptions).map(o=>o.text);
-  if(vals.some(v=>["Shinigami","Hollow","Âme"].includes(v))) genAgeOptions(10000);
-  else genAgeOptions(100);
+function updateAgeChoices() {
+  const speciesSelect = document.getElementById("newSpecies");
+  if (!speciesSelect) return;
+  
+  const vals = Array.from(speciesSelect.selectedOptions).map(o => o.text);
+  if (vals.some(v => ["Shinigami", "Hollow", "Âme"].includes(v))) {
+    genAgeOptions(10000);
+  } else {
+    genAgeOptions(100);
+  }
 }
 
-function saveNew(){
-  // Générer des stats aléatoires entre 0 et 10
-  const randomStat = () => Math.floor(Math.random() * 11); // 0 à 10
+function saveNew() {
+  const speciesSelect = document.getElementById("newSpecies");
+  const species = speciesSelect ? Array.from(speciesSelect.selectedOptions).map(o => o.text) : ['Humain'];
   
-  const n={
-    name: document.getElementById("newName").value.trim(),
-    age: document.getElementById("newAge").value,
-    past: document.getElementById("newPast").value.trim(),
-    species: Array.from(document.getElementById("newSpecies").selectedOptions).map(o=>o.text).join(", "),
-    skills: document.getElementById("newSkills").value.trim(),
-    languages: Array.from(document.getElementById("newLang").selectedOptions).map(o=>o.text).join(", "),
-    traits: document.getElementById("newTraits").value.trim(),
-    goals: document.getElementById("newGoals").value.trim(),
+  const stats = generateStatsForRace(species);
+  
+  const nameInput = document.getElementById("newName");
+  const ageInput = document.getElementById("newAge");
+  const pastInput = document.getElementById("newPast");
+  const skillsInput = document.getElementById("newSkills");
+  const langInput = document.getElementById("newLang");
+  const traitsInput = document.getElementById("newTraits");
+  const goalsInput = document.getElementById("newGoals");
+  
+  const n = {
+    name: nameInput ? nameInput.value.trim() : '',
+    age: ageInput ? ageInput.value : '20',
+    past: pastInput ? pastInput.value.trim() : '',
+    species: species.join(", "),
+    skills: skillsInput ? skillsInput.value.trim() : '',
+    languages: langInput ? Array.from(langInput.selectedOptions).map(o => o.text).join(", ") : '',
+    traits: traitsInput ? traitsInput.value.trim() : '',
+    goals: goalsInput ? goalsInput.value.trim() : '',
     inventory: [],
-    // ⬇️ NOUVEAU : Niveau et stats automatiques
     level: 1,
     xp: 0,
     location: "Karakura Town",
-    stats: {
-      Reiatsu: randomStat(),
-      Zanjutsu: randomStat(),
-      Hakuda: randomStat(),
-      Hohō: randomStat(),
-      Kidō: randomStat(),
-      Intellect: randomStat()
+    hp: stats.maxHp,
+    maxHp: stats.maxHp,
+    reiatsu: stats.maxReiatsu,
+    maxReiatsu: stats.maxReiatsu,
+    stamina: stats.maxStamina,
+    maxStamina: stats.maxStamina,
+    status: [],
+    stats: stats.attributes,
+    raceBonuses: stats.bonuses
+  };
+  
+  if (!n.name) {
+    alert("Nom obligatoire");
+    return;
+  }
+  
+  if (!currentRP.players) currentRP.players = [];
+  currentRP.players.push(n);
+  
+  closeNew();
+  showPlayers(currentRP);
+  
+  appendMsg('system', `✨ ${n.name} créé(e) ! Race: ${n.species}`);
+  appendMsg('system', `📊 Stats: Reiatsu ${n.stats.Reiatsu}, Endurance ${n.stats.Endurance}, Hakuda ${n.stats.Hakuda}, Défense ${n.stats.Defense}, Hohō ${n.stats.Hoho}, Intellect ${n.stats.Intellect}`);
+}
+
+// ===== GÉNÉRATION DE STATS PAR RACE =====
+
+// ===== SUITE DU CODE CORRIGÉ (PARTIE 4) =====
+
+function generateStatsForRace(speciesArray) {
+  let baseStats = {
+    Reiatsu: 0,
+    Endurance: 0,
+    Hakuda: 0,
+    Defense: 0,
+    Hoho: 0,
+    Intellect: 0
+  };
+  
+  let bonuses = [];
+  let hpBase = 50;
+  let reiatsuBase = 30;
+  let staminaBase = 30;
+  
+  const raceConfigs = {
+    'Humain': {
+      ranges: { Reiatsu: [0, 5], Endurance: [2, 7], Hakuda: [1, 6], Defense: [1, 5], Hoho: [1, 5], Intellect: [2, 8] },
+      hpBonus: 0, reiatsuBonus: 0, staminaBonus: 10,
+      bonusDesc: '🧑 Humain: +10 Stamina, Intellect élevé'
+    },
+    'Shinigami': {
+      ranges: { Reiatsu: [3, 8], Endurance: [3, 7], Hakuda: [4, 9], Defense: [2, 7], Hoho: [3, 8], Intellect: [2, 7] },
+      hpBonus: 20, reiatsuBonus: 20, staminaBonus: 10,
+      bonusDesc: '⚔️ Shinigami: +20 HP, +20 Reiatsu, Hakuda élevé'
+    },
+    'Hollow': {
+      ranges: { Reiatsu: [4, 9], Endurance: [4, 8], Hakuda: [3, 8], Defense: [4, 9], Hoho: [2, 6], Intellect: [1, 5] },
+      hpBonus: 30, reiatsuBonus: 30, staminaBonus: 20,
+      bonusDesc: '👹 Hollow: +30 HP, +30 Reiatsu, Défense élevée'
+    },
+    'Arrancar': {
+      ranges: { Reiatsu: [5, 10], Endurance: [4, 9], Hakuda: [4, 9], Defense: [4, 8], Hoho: [4, 9], Intellect: [2, 7] },
+      hpBonus: 40, reiatsuBonus: 40, staminaBonus: 20,
+      bonusDesc: '😈 Arrancar: +40 HP, +40 Reiatsu, Stats équilibrées élevées'
+    },
+    'Quincy': {
+      ranges: { Reiatsu: [5, 10], Endurance: [2, 6], Hakuda: [1, 5], Defense: [1, 5], Hoho: [3, 8], Intellect: [4, 9] },
+      hpBonus: 0, reiatsuBonus: 50, staminaBonus: 0,
+      bonusDesc: '✝️ Quincy: +50 Reiatsu, Intellect élevé, Faible en physique'
+    },
+    'Fullbringer': {
+      ranges: { Reiatsu: [3, 8], Endurance: [3, 7], Hakuda: [2, 7], Defense: [2, 6], Hoho: [3, 7], Intellect: [3, 8] },
+      hpBonus: 10, reiatsuBonus: 20, staminaBonus: 10,
+      bonusDesc: '✊ Fullbringer: Stats équilibrées, Polyvalent'
+    },
+    'Âme': {
+      ranges: { Reiatsu: [1, 6], Endurance: [1, 5], Hakuda: [0, 4], Defense: [0, 4], Hoho: [1, 5], Intellect: [2, 7] },
+      hpBonus: -10, reiatsuBonus: 10, staminaBonus: 0,
+      bonusDesc: '👻 Âme: Stats faibles, Potentiel de croissance'
+    },
+    'Vizard': {
+      ranges: { Reiatsu: [5, 10], Endurance: [4, 8], Hakuda: [4, 9], Defense: [3, 7], Hoho: [4, 9], Intellect: [3, 7] },
+      hpBonus: 30, reiatsuBonus: 40, staminaBonus: 15,
+      bonusDesc: '🎭 Vizard: Shinigami + Hollow, Très puissant'
+    },
+    'Hybrid': {
+      ranges: { Reiatsu: [3, 9], Endurance: [3, 8], Hakuda: [3, 8], Defense: [3, 7], Hoho: [3, 8], Intellect: [3, 8] },
+      hpBonus: 20, reiatsuBonus: 25, staminaBonus: 15,
+      bonusDesc: '🔀 Hybride: Stats variées, Potentiel unique'
     }
   };
   
-  if(!n.name){alert("Nom obligatoire");return;}
-  currentRP.players.push(n);
-  closeNew(); 
-  showPlayers(currentRP);
+  speciesArray.forEach(species => {
+    const config = raceConfigs[species];
+    if (config) {
+      Object.keys(baseStats).forEach(stat => {
+        const [min, max] = config.ranges[stat];
+        const roll = randomRange(min, max);
+        baseStats[stat] = Math.max(baseStats[stat], roll);
+      });
+      
+      hpBase += config.hpBonus;
+      reiatsuBase += config.reiatsuBonus;
+      staminaBase += config.staminaBonus;
+      bonuses.push(config.bonusDesc);
+    }
+  });
+  
+  if (bonuses.length === 0) {
+    Object.keys(baseStats).forEach(stat => {
+      baseStats[stat] = randomRange(1, 5);
+    });
+    bonuses.push('❓ Race inconnue: Stats de base');
+  }
+  
+  return {
+    attributes: baseStats,
+    maxHp: Math.max(30, hpBase + baseStats.Defense * 5),
+    maxReiatsu: Math.max(20, reiatsuBase + baseStats.Reiatsu * 3),
+    maxStamina: Math.max(20, staminaBase + baseStats.Endurance * 3),
+    bonuses: bonuses
+  };
 }
 
-// ----- Delete -----
-function deleteCard(i){
-  if(confirm("Supprimer cette fiche ?")){
-    currentRP.players.splice(i,1);
+function randomRange(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// ===== SUPPRESSION DE CARTE =====
+
+function deleteCard(i) {
+  if (confirm("Supprimer cette fiche ?")) {
+    currentRP.players.splice(i, 1);
     showPlayers(currentRP);
   }
 }
 
-// ----- INVENTAIRE -----
-let currentInvIndex = -1;
+// ===== INVENTAIRE =====
 
-function openInventory(i){
+function openInventory(i) {
   currentInvIndex = i;
   const pj = currentRP.players[i];
   
-  // Initialiser l'inventaire s'il n'existe pas
-  if(!pj.inventory) pj.inventory = [];
+  if (!pj.inventory) pj.inventory = [];
   
-  document.getElementById("invTitle").innerText = "🎒 Inventaire de " + pj.name;
+  const invTitle = document.getElementById("invTitle");
+  if (invTitle) invTitle.innerText = "🎒 Inventaire de " + pj.name;
+  
   renderInventory();
-  document.getElementById("invModal").style.display = "flex";
+  
+  const modal = document.getElementById("invModal");
+  if (modal) modal.style.display = "flex";
 }
 
-function renderInventory(){
+function renderInventory() {
   const pj = currentRP.players[currentInvIndex];
   const inv = pj.inventory || [];
   const list = document.getElementById("invList");
   
-  if(inv.length === 0){
+  if (!list) return;
+  
+  if (inv.length === 0) {
     list.innerHTML = '<div class="inv-empty">📦 Inventaire vide</div>';
   } else {
     list.innerHTML = inv.map((item, idx) => {
@@ -1057,17 +4299,17 @@ function renderInventory(){
     }).join("");
   }
   
-  // Compteur
   const totalItems = inv.reduce((sum, item) => {
     const q = parseItem(item).qty;
     return sum + q;
   }, 0);
-  document.getElementById("invCount").innerText = `${inv.length} type(s), ${totalItems} objet(s)`;
+  
+  const invCount = document.getElementById("invCount");
+  if (invCount) invCount.innerText = `${inv.length} type(s), ${totalItems} objet(s)`;
 }
 
-function parseItem(item){
-  // Format: "nom" ou "nom|qty" ou "nom|qty|category"
-  if(typeof item === 'object'){
+function parseItem(item) {
+  if (typeof item === 'object') {
     return {
       name: item.name || item,
       qty: item.qty || 1,
@@ -1089,17 +4331,17 @@ function parseItem(item){
   };
 }
 
-function guessCategory(name){
+function guessCategory(name) {
   const lower = name.toLowerCase();
-  if(lower.includes('épée') || lower.includes('zanpakuto') || lower.includes('arme') || lower.includes('katana')) return 'weapon';
-  if(lower.includes('armure') || lower.includes('protection') || lower.includes('bouclier')) return 'armor';
-  if(lower.includes('potion') || lower.includes('pilule') || lower.includes('nourriture') || lower.includes('soin')) return 'consumable';
-  if(lower.includes('clé') || lower.includes('badge') || lower.includes('pass')) return 'key';
+  if (lower.includes('épée') || lower.includes('zanpakuto') || lower.includes('arme') || lower.includes('katana')) return 'weapon';
+  if (lower.includes('armure') || lower.includes('protection') || lower.includes('bouclier')) return 'armor';
+  if (lower.includes('potion') || lower.includes('pilule') || lower.includes('nourriture') || lower.includes('soin')) return 'consumable';
+  if (lower.includes('clé') || lower.includes('badge') || lower.includes('pass')) return 'key';
   return 'misc';
 }
 
-function getItemIcon(category){
-  switch(category){
+function getItemIcon(category) {
+  switch (category) {
     case 'weapon': return '⚔️';
     case 'armor': return '🛡️';
     case 'consumable': return '🧪';
@@ -1108,49 +4350,48 @@ function getItemIcon(category){
   }
 }
 
-function addItem(){
+function addItem() {
   const nameInput = document.getElementById("newItem");
   const qtyInput = document.getElementById("newItemQty");
   
-  const name = nameInput.value.trim();
-  const qty = parseInt(qtyInput.value) || 1;
+  if (!nameInput) return;
   
-  if(!name){
+  const name = nameInput.value.trim();
+  const qty = parseInt(qtyInput?.value) || 1;
+  
+  if (!name) {
     alert("Entrez un nom d'objet");
     return;
   }
   
   const pj = currentRP.players[currentInvIndex];
   
-  // Vérifier si l'objet existe déjà
   const existingIndex = pj.inventory.findIndex(item => {
     const parsed = parseItem(item);
     return parsed.name.toLowerCase() === name.toLowerCase();
   });
   
-  if(existingIndex >= 0){
-    // Augmenter la quantité
+  if (existingIndex >= 0) {
     const existing = parseItem(pj.inventory[existingIndex]);
     const category = existing.category;
     pj.inventory[existingIndex] = `${existing.name}|${existing.qty + qty}|${category}`;
   } else {
-    // Ajouter nouvel objet
     const category = guessCategory(name);
     pj.inventory.push(`${name}|${qty}|${category}`);
   }
   
   nameInput.value = "";
-  qtyInput.value = "1";
+  if (qtyInput) qtyInput.value = "1";
   renderInventory();
 }
 
-function changeQty(idx, delta){
+function changeQty(idx, delta) {
   const pj = currentRP.players[currentInvIndex];
   const item = parseItem(pj.inventory[idx]);
   
   const newQty = item.qty + delta;
   
-  if(newQty <= 0){
+  if (newQty <= 0) {
     removeItem(idx);
   } else {
     pj.inventory[idx] = `${item.name}|${newQty}|${item.category}`;
@@ -1158,95 +4399,109 @@ function changeQty(idx, delta){
   }
 }
 
-function removeItem(idx){
+function removeItem(idx) {
   const pj = currentRP.players[currentInvIndex];
   const item = parseItem(pj.inventory[idx]);
   
-  if(confirm(`Supprimer "${item.name}" ?`)){
+  if (confirm(`Supprimer "${item.name}" ?`)) {
     pj.inventory.splice(idx, 1);
     renderInventory();
   }
 }
 
-function clearInventory(){
-  if(confirm("Vider tout l'inventaire ?")){
+function clearInventory() {
+  if (confirm("Vider tout l'inventaire ?")) {
     currentRP.players[currentInvIndex].inventory = [];
     renderInventory();
   }
 }
 
-function closeInv(){
-  document.getElementById("invModal").style.display = "none";
+function closeInv() {
+  const modal = document.getElementById("invModal");
+  if (modal) modal.style.display = "none";
   currentInvIndex = -1;
 }
 
-// ----- NPC -----
-function openNPC(){
-  const list=document.getElementById("npcList");
-  list.innerHTML="";
-  (currentRP.npcs||[]).forEach(n=>{
-    const d=document.createElement("div");
-    d.className="npcCard";
-    d.innerHTML=`<b>${n.name}</b> — vu par: ${n.knownBy.join(", ")}<br><i>${n.description||""}</i>`;
+// ===== NPC =====
+
+function openNPC() {
+  const list = document.getElementById("npcList");
+  if (!list) return;
+  
+  list.innerHTML = "";
+  (currentRP.npcs || []).forEach(n => {
+    const d = document.createElement("div");
+    d.className = "npcCard";
+    d.innerHTML = `<b>${n.name}</b> — vu par: ${n.knownBy.join(", ")}<br><i>${n.description || ""}</i>`;
     list.appendChild(d);
   });
-  document.getElementById("npcModal").style.display="flex";
+  
+  const modal = document.getElementById("npcModal");
+  if (modal) modal.style.display = "flex";
 }
-function closeNPC(){document.getElementById("npcModal").style.display="none";}
 
+function closeNPC() {
+  const modal = document.getElementById("npcModal");
+  if (modal) modal.style.display = "none";
+}
 
-// ---- BESTIAIRE ----
-function openBestiaire(){
-  const modal=document.getElementById("bestiaireModal");
-  const list=document.getElementById("bestiaireList");
-  list.innerHTML="";
+// ===== BESTIAIRE =====
 
+function openBestiaire() {
+  const modal = document.getElementById("bestiaireModal");
+  const list = document.getElementById("bestiaireList");
+  
+  if (!list || !modal) return;
+  
+  list.innerHTML = "";
+  
   const factions = currentRP.bestiaire || {};
-  if(Object.keys(factions).length===0){
-    list.innerHTML="<i>Aucun personnage défini pour ce RP.</i>";
-    modal.style.display="flex";
+  if (Object.keys(factions).length === 0) {
+    list.innerHTML = "<i>Aucun personnage défini pour ce RP.</i>";
+    modal.style.display = "flex";
     return;
   }
-
-  Object.entries(factions).forEach(([faction, persos])=>{
-    const bloc=document.createElement("div");
-    bloc.innerHTML=`<h3 style="margin-top:20px;color:#ffcc66">${faction}</h3>`;
-    persos.forEach((p,index)=>{
-      const known = (p.knownBy && p.knownBy.length>0);
+  
+  Object.entries(factions).forEach(([faction, persos]) => {
+    const bloc = document.createElement("div");
+    bloc.innerHTML = `<h3 style="margin-top:20px;color:#ffcc66">${faction}</h3>`;
+    persos.forEach((p, index) => {
+      const known = (p.knownBy && p.knownBy.length > 0);
       const color = known ? "#58a6ff" : "#777";
-      const who   = known ? `(vu par : ${p.knownBy.join(", ")})` : "(inconnu)";
-      const div=document.createElement("div");
-      div.style.borderBottom="1px solid #333";
-      div.style.padding="8px 2px";
-      div.innerHTML=`
+      const who = known ? `(vu par : ${p.knownBy.join(", ")})` : "(inconnu)";
+      const div = document.createElement("div");
+      div.style.borderBottom = "1px solid #333";
+      div.style.padding = "8px 2px";
+      div.innerHTML = `
         <b style="color:${color}">${p.name}</b>
-        <button class='btn' style='float:right' onclick='openDetail("${faction}",${index})'>🔍 Détails</button>
-        <br><span style="color:#aaa">${p.role||""}</span><br>
-        <span style="color:#aaa;">Localisation :</span> ${p.location||"?"}<br>
+        <button class='btn' style='float:right' onclick='openDetail("${faction}",${index})'>🔍 Détails</button>
+        <br><span style="color:#aaa">${p.role || ""}</span><br>
+        <span style="color:#aaa;">Localisation :</span> ${p.location || "?"}<br>
         <small>${who}</small>
       `;
       bloc.appendChild(div);
     });
     list.appendChild(bloc);
   });
-
-  modal.style.display="flex";
+  
+  modal.style.display = "flex";
 }
 
-function closeBestiaire(){
-  document.getElementById("bestiaireModal").style.display="none";
+function closeBestiaire() {
+  const modal = document.getElementById("bestiaireModal");
+  if (modal) modal.style.display = "none";
 }
 
-/* --- Nouvelle fonction détail --- */
-function openDetail(factionName,index){
+function openDetail(factionName, index) {
   const faction = currentRP.bestiaire[factionName];
-  if(!faction) return;
+  if (!faction) return;
+  
   const p = faction[index];
   const detail = document.getElementById("detailContent");
-
-  // Stats relatives pour le bestiaire aussi
+  if (!detail) return;
+  
   let statsHTML = "";
-  if(p.stats){
+  if (p.stats) {
     const values = Object.values(p.stats).filter(v => typeof v === 'number');
     const maxStat = Math.max(...values, 1);
     
@@ -1255,8 +4510,8 @@ function openDetail(factionName,index){
         <span>Stats</span>
         <span class="max-indicator">Max: ${maxStat}</span>
       </div>
-      ${Object.entries(p.stats).map(([k,v])=>{
-        if(typeof v !== 'number') return `<div class="stat-item"><span class="stat-name">${k}</span><span>${v}</span></div>`;
+      ${Object.entries(p.stats).map(([k, v]) => {
+        if (typeof v !== 'number') return `<div class="stat-item"><span class="stat-name">${k}</span><span>${v}</span></div>`;
         const percent = (v / maxStat) * 100;
         const color = getStatColor(percent);
         return `
@@ -1267,10 +4522,11 @@ function openDetail(factionName,index){
           </div>
           <span class="stat-value">${v}</span>
         </div>
-      `}).join("")}
+      `;
+      }).join("")}
     </div>`;
   }
-
+  
   detail.innerHTML = `
     <h3 style="color:#58a6ff;margin-top:0;">${p.name}</h3>
     <p><b>Espèce :</b> ${p.species || "?"} | <b>Faction :</b> ${factionName}</p>
@@ -1283,19 +4539,20 @@ function openDetail(factionName,index){
     ${statsHTML}
     ${p.hidden ? `<details><summary>🔒 Informations cachées</summary><p>${p.hidden}</p></details>` : ""}
   `;
-  document.getElementById("detailModal").style.display="flex";
+  
+  const modal = document.getElementById("detailModal");
+  if (modal) modal.style.display = "flex";
 }
 
-function closeDetail(){
-  document.getElementById("detailModal").style.display="none";
+function closeDetail() {
+  const modal = document.getElementById("detailModal");
+  if (modal) modal.style.display = "none";
 }
 
+// ===== SYSTÈME DE DÉPLACEMENT =====
 
-// ----- SYSTÈME DE DÉPLACEMENT -----
-let currentTravelIndex = -1;
-let currentRegion = 'monde_humain';
+// ===== SUITE DU CODE CORRIGÉ (PARTIE 5) =====
 
-// Définition des lieux par région
 const LOCATIONS = {
   monde_humain: [
     { id: 'karakura', name: 'Karakura Town', icon: '🏙️', desc: 'Ville principale' },
@@ -1337,31 +4594,35 @@ function openTravel(i) {
   currentTravelIndex = i;
   const pj = currentRP.players[i];
   
-  document.getElementById("travelTitle").innerText = "🚶 Déplacement de " + pj.name;
-  document.getElementById("currentLocationDisplay").innerText = pj.location || "Inconnu";
+  const travelTitle = document.getElementById("travelTitle");
+  const currentLocationDisplay = document.getElementById("currentLocationDisplay");
   
-  // Reset tabs
+  if (travelTitle) travelTitle.innerText = "🚶 Déplacement de " + pj.name;
+  if (currentLocationDisplay) currentLocationDisplay.innerText = pj.location || "Inconnu";
+  
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelector('.tab-btn').classList.add('active');
+  const firstTab = document.querySelector('.tab-btn');
+  if (firstTab) firstTab.classList.add('active');
   
   currentRegion = 'monde_humain';
   renderLocations();
   
-  document.getElementById("travelModal").style.display = "flex";
+  const modal = document.getElementById("travelModal");
+  if (modal) modal.style.display = "flex";
 }
 
 function closeTravel() {
-  document.getElementById("travelModal").style.display = "none";
+  const modal = document.getElementById("travelModal");
+  if (modal) modal.style.display = "none";
   currentTravelIndex = -1;
 }
 
 function showRegion(region) {
   currentRegion = region;
   
-  // Update active tab
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
-    if(btn.onclick.toString().includes(region)) {
+    if (btn.onclick && btn.onclick.toString().includes(region)) {
       btn.classList.add('active');
     }
   });
@@ -1375,13 +4636,15 @@ function renderLocations() {
   const locations = LOCATIONS[currentRegion] || [];
   const list = document.getElementById("locationsList");
   
+  if (!list) return;
+  
   list.innerHTML = locations.map(loc => {
     const isCurrent = currentLoc.toLowerCase() === loc.name.toLowerCase();
     const isLocked = loc.locked || false;
     
     let classes = "location-card";
-    if(isCurrent) classes += " current";
-    if(isLocked) classes += " locked";
+    if (isCurrent) classes += " current";
+    if (isLocked) classes += " locked";
     
     return `
       <div class="${classes}" onclick="${isLocked ? '' : `travelTo('${loc.name}')`}">
@@ -1396,7 +4659,7 @@ function renderLocations() {
 function travelTo(locationName) {
   const pj = currentRP.players[currentTravelIndex];
   
-  if(pj.location === locationName) {
+  if (pj.location === locationName) {
     alert("Vous êtes déjà à cet endroit !");
     return;
   }
@@ -1404,25 +4667,27 @@ function travelTo(locationName) {
   const oldLocation = pj.location || "Inconnu";
   pj.location = locationName;
   
-  // Animation
-  document.getElementById("locationsList").classList.add("traveling");
-  setTimeout(() => {
-    document.getElementById("locationsList").classList.remove("traveling");
-  }, 500);
+  const locationsList = document.getElementById("locationsList");
+  if (locationsList) {
+    locationsList.classList.add("traveling");
+    setTimeout(() => {
+      locationsList.classList.remove("traveling");
+    }, 500);
+  }
   
-  // Update display
-  document.getElementById("currentLocationDisplay").innerText = locationName;
+  const currentLocationDisplay = document.getElementById("currentLocationDisplay");
+  if (currentLocationDisplay) currentLocationDisplay.innerText = locationName;
+  
   renderLocations();
   showPlayers(currentRP);
+  syncPlayerUpdate(currentTravelIndex);
   
-  // Notification
   appendMsg("narrateur", `📍 ${pj.name} se déplace de "${oldLocation}" vers "${locationName}".`);
 }
 
-// Fonction pour ajouter un lieu personnalisé (bonus)
 function addCustomLocation() {
   const name = prompt("Nom du nouveau lieu :");
-  if(!name) return;
+  if (!name) return;
   
   const region = currentRegion;
   const icon = prompt("Icône (emoji) :", "📍") || "📍";
@@ -1438,55 +4703,1094 @@ function addCustomLocation() {
   renderLocations();
 }
 
-/* ----------- TCHAT VISUEL ----------- */
-/* ----------- TCHAT GPT CONNECTÉ ----------- */
-async function sendChat(type){
-  const msgField=document.getElementById("chatMsg");
-  const txt=msgField.value.trim();
-  if(!txt) return;
+// ===== SYSTÈME DE TEMPS RP =====
 
-  appendMsg("joueur", txt);
-  msgField.value="";
-  try{
-    const r = await fetch("/hf",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({message:txt})
-    });
-    const data = await r.json();
-    appendMsg("narrateur", data.reply || "(Pas de réponse)");
-  }catch(e){
-    appendMsg("narrateur","⚠️ Erreur : "+e.message);
+function initRPTime() {
+  if (currentRP?.rpTime) {
+    rpTime.date = new Date(currentRP.rpTime.date);
+    rpTime.tour = currentRP.rpTime.tour || 1;
+  } else {
+    rpTime.date = new Date(RP_START_DATE);
+    rpTime.tour = 1;
+  }
+  updateTimeDisplay();
+}
+
+function updateTimeDisplay() {
+  const date = rpTime.date;
+  
+  const jour = JOURS[date.getDay()];
+  const jourNum = String(date.getDate()).padStart(2, '0');
+  const mois = MOIS[date.getMonth()];
+  const heures = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  const rpDate = document.getElementById('rpDate');
+  const rpTimeEl = document.getElementById('rpTime');
+  
+  if (rpDate) rpDate.innerHTML = `📅 ${jour} ${jourNum} ${mois}`;
+  if (rpTimeEl) rpTimeEl.innerHTML = `🕐 ${heures}:${minutes}`;
+  
+  const datetime = document.querySelector('.rp-datetime');
+  if (datetime) {
+    datetime.classList.remove('day', 'night');
+    const hour = date.getHours();
+    if (hour >= 6 && hour < 19) {
+      datetime.classList.add('day');
+    } else {
+      datetime.classList.add('night');
+    }
+  }
+  
+  const fullDisplay = document.getElementById('timeDisplayFull');
+  if (fullDisplay) {
+    fullDisplay.innerHTML = `${jour} ${jourNum} ${mois} - ${heures}:${minutes}`;
+  }
+  
+  const tourDisplay = document.getElementById('timeDisplayTour');
+  if (tourDisplay) {
+    tourDisplay.innerHTML = `Tour ${rpTime.tour}`;
+  }
+  
+  const daysUntil = document.getElementById('daysUntilEvent');
+  if (daysUntil) {
+    const diff = RUKIA_EVENT_DATE - rpTime.date;
+    const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    
+    if (daysLeft > 0) {
+      daysUntil.innerHTML = `⏳ ${daysLeft} jour(s) avant la rencontre Rukia/Ichigo`;
+    } else if (daysLeft === 0) {
+      daysUntil.innerHTML = `🔴 C'EST AUJOURD'HUI ! La rencontre approche...`;
+    } else {
+      daysUntil.innerHTML = `✅ La rencontre Rukia/Ichigo a eu lieu il y a ${Math.abs(daysLeft)} jour(s)`;
+    }
+  }
+  
+  if (currentRP) {
+    currentRP.rpTime = {
+      date: rpTime.date.toISOString(),
+      tour: rpTime.tour
+    };
   }
 }
 
-function appendMsg(role,text){
-  const win=document.getElementById("chatWindow");
-  const div=document.createElement("div");
-  div.className="msg "+role;
-  div.innerText=text;
-  win.appendChild(div);
-  win.scrollTop=win.scrollHeight;
+function openTimeControl() {
+  updateTimeDisplay();
+  
+  const dateInput = document.getElementById('manualDate');
+  const timeInput = document.getElementById('manualTime');
+  
+  if (dateInput) {
+    const d = rpTime.date;
+    dateInput.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  if (timeInput) {
+    const d = rpTime.date;
+    timeInput.value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+  
+  const modal = document.getElementById('timeModal');
+  if (modal) modal.style.display = 'flex';
 }
 
-function clearChat(){
-  if(confirm("Vider le salon RP ?"))
-    document.getElementById("chatWindow").innerHTML="";
+function closeTimeControl() {
+  const modal = document.getElementById('timeModal');
+  if (modal) modal.style.display = 'none';
 }
 
-// ----- SAVE TO SERVER -----
-async function saveData(){
-  const res=await fetch("/save",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(allData)
+function advanceTime(hours, minutes) {
+  const totalMinutes = hours * 60 + minutes;
+  rpTime.date = new Date(rpTime.date.getTime() + totalMinutes * 60 * 1000);
+  
+  updateTimeDisplay();
+  
+  let msg = '';
+  if (hours > 0 && minutes > 0) {
+    msg = `${hours}h${minutes}min`;
+  } else if (hours > 0) {
+    msg = `${hours} heure(s)`;
+  } else {
+    msg = `${minutes} minute(s)`;
+  }
+  
+  appendMsg('system', `⏩ Le temps avance de ${msg}. Il est maintenant ${formatRPTime(rpTime.date)}.`);
+  announceTimeOfDay();
+}
+
+function advanceDay(days) {
+  rpTime.date = new Date(rpTime.date.getTime() + days * 24 * 60 * 60 * 1000);
+  
+  updateTimeDisplay();
+  appendMsg('system', `⏩ ${days} jour(s) s'écoule(nt). Nous sommes maintenant le ${formatRPDate(rpTime.date)}.`);
+  announceTimeOfDay();
+}
+
+function setTimeOfDay(hours, minutes) {
+  rpTime.date.setHours(hours, minutes, 0, 0);
+  
+  updateTimeDisplay();
+  
+  const periods = {
+    6: '🌅 L\'aube se lève...',
+    12: '☀️ Le soleil est au zénith.',
+    18: '🌆 Le soir tombe sur la ville.',
+    22: '🌙 La nuit enveloppe le monde.'
+  };
+  
+  appendMsg('narrateur', periods[hours] || `Il est maintenant ${formatRPTime(rpTime.date)}.`);
+}
+
+function setManualDateTime() {
+  const dateInput = document.getElementById('manualDate');
+  const timeInput = document.getElementById('manualTime');
+  
+  if (!dateInput || !dateInput.value) {
+    alert('Veuillez entrer une date.');
+    return;
+  }
+  
+  const [year, month, day] = dateInput.value.split('-').map(Number);
+  const [hours, minutes] = timeInput && timeInput.value ? timeInput.value.split(':').map(Number) : [12, 0];
+  
+  rpTime.date = new Date(year, month - 1, day, hours, minutes);
+  
+  updateTimeDisplay();
+  appendMsg('system', `📅 Date modifiée: ${formatRPDate(rpTime.date)} à ${formatRPTime(rpTime.date)}.`);
+  closeTimeControl();
+}
+
+function resetRPTime() {
+  if (confirm('Revenir au 01 Avril (début du RP) ?')) {
+    rpTime.date = new Date(RP_START_DATE);
+    rpTime.tour = 1;
+    
+    updateTimeDisplay();
+    appendMsg('system', '🔄 Temps réinitialisé au 01 Avril, 12:00 (Tour 1).');
+    closeTimeControl();
+  }
+}
+
+function formatRPDate(date) {
+  const jour = JOURS[date.getDay()];
+  const jourNum = String(date.getDate()).padStart(2, '0');
+  const mois = MOIS[date.getMonth()];
+  return `${jour} ${jourNum} ${mois}`;
+}
+
+function formatRPTime(date) {
+  const heures = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${heures}:${minutes}`;
+}
+
+function announceTimeOfDay() {
+  const hour = rpTime.date.getHours();
+  let period = '';
+  
+  if (hour >= 5 && hour < 8) period = '🌅 Le soleil se lève à l\'horizon.';
+  else if (hour >= 8 && hour < 12) period = '☀️ La matinée est bien entamée.';
+  else if (hour >= 12 && hour < 14) period = '🌞 C\'est l\'heure du déjeuner.';
+  else if (hour >= 14 && hour < 17) period = '☀️ L\'après-midi suit son cours.';
+  else if (hour >= 17 && hour < 20) period = '🌆 Le soir approche.';
+  else if (hour >= 20 && hour < 23) period = '🌙 La nuit est tombée.';
+  else period = '🌑 C\'est le milieu de la nuit.';
+  
+  const isEventDay = rpTime.date.getDate() === 12 && rpTime.date.getMonth() === 4;
+  if (isEventDay && hour >= 19) {
+    period += '\n⚠️ L\'heure de la rencontre fatidique approche...';
+  }
+}
+
+function advanceTimeOnTurn(minutes = 5) {
+  rpTime.date = new Date(rpTime.date.getTime() + minutes * 60 * 1000);
+  updateTimeDisplay();
+}
+
+function checkSpecialEvents() {
+  const date = rpTime.date;
+  const day = date.getDate();
+  const month = date.getMonth();
+  const hour = date.getHours();
+  
+  if (month === 4 && day === 12 && hour === 19 && date.getMinutes() >= 13) {
+    appendMsg('narrateur', '⚡ CE SOIR, LE DESTIN S\'ACCOMPLIT ! Rukia Kuchiki rencontre Ichigo Kurosaki pour la première fois...');
+  }
+}
+
+function getTimeOfDayPeriod() {
+  const hour = rpTime.date.getHours();
+  
+  if (hour >= 5 && hour < 7) return { name: 'Aube', icon: '🌅', class: 'dawn' };
+  if (hour >= 7 && hour < 12) return { name: 'Matin', icon: '☀️', class: 'morning' };
+  if (hour >= 12 && hour < 14) return { name: 'Midi', icon: '🌞', class: 'noon' };
+  if (hour >= 14 && hour < 17) return { name: 'Après-midi', icon: '🌤️', class: 'afternoon' };
+  if (hour >= 17 && hour < 20) return { name: 'Soir', icon: '🌆', class: 'evening' };
+  if (hour >= 20 && hour < 23) return { name: 'Nuit', icon: '🌙', class: 'night' };
+  return { name: 'Nuit profonde', icon: '🌑', class: 'midnight' };
+}
+
+// ===== DÉTAILS JOUEUR =====
+
+// ===== SUITE DU CODE CORRIGÉ (PARTIE 6 - FINALE) =====
+
+function openPlayerDetails(index) {
+  currentDetailIndex = index;
+  const pj = currentRP.players[index];
+  
+  // Initialiser les valeurs manquantes
+  if (pj.hp === undefined) pj.hp = 100;
+  if (pj.maxHp === undefined) pj.maxHp = 100;
+  if (pj.reiatsu === undefined) pj.reiatsu = 50;
+  if (pj.maxReiatsu === undefined) pj.maxReiatsu = 50;
+  if (pj.stamina === undefined) pj.stamina = 50;
+  if (pj.maxStamina === undefined) pj.maxStamina = 50;
+  if (!pj.status) pj.status = [];
+  if (!pj.stats) {
+    pj.stats = { Reiatsu: 5, Endurance: 5, Hakuda: 5, Defense: 5, Hoho: 5, Intellect: 5 };
+  }
+  
+  const hpPercent = (pj.hp / pj.maxHp) * 100;
+  const reiatsuPercent = (pj.reiatsu / pj.maxReiatsu) * 100;
+  const staminaPercent = (pj.stamina / pj.maxStamina) * 100;
+  
+  const statDescriptions = {
+    Reiatsu: { icon: '🔵', name: 'Pression Spirituelle', desc: 'Puissance des sorts (Kidō, Cero, Heilig Pfeil)' },
+    Endurance: { icon: '🟡', name: 'Endurance', desc: 'Capacité à utiliser des attaques physiques' },
+    Hakuda: { icon: '👊', name: 'Hakuda / Zanjutsu', desc: 'Dégâts physiques (mains nues / épée)' },
+    Defense: { icon: '🛡️', name: 'Défense', desc: 'Réduction des dégâts reçus' },
+    Hoho: { icon: '💨', name: 'Hohō / Vitesse', desc: 'Esquive, Shunpo, Sonído, Hirenkyaku' },
+    Intellect: { icon: '🧠', name: 'Intellect', desc: 'Coups critiques, Stratégie, Perception' }
+  };
+  
+  const values = Object.values(pj.stats);
+  const maxStat = Math.max(...values, 1);
+  
+  const statsHTML = Object.entries(pj.stats).map(([k, v]) => {
+    const info = statDescriptions[k] || { icon: '❓', name: k, desc: '' };
+    const percent = (v / maxStat) * 100;
+    const color = getStatColor(percent);
+    
+    return `
+      <div class="stat-detail-item" title="${info.desc}">
+        <div class="stat-detail-header">
+          <span class="stat-detail-icon">${info.icon}</span>
+          <span class="stat-detail-name">${info.name}</span>
+          <span class="stat-detail-value">${v}</span>
+        </div>
+        <div class="stat-bar">
+          <div class="stat-fill" style="width:${percent}%; background:${color}"></div>
+        </div>
+        <div class="stat-detail-desc">${info.desc}</div>
+      </div>
+    `;
+  }).join('');
+  
+  const statusHTML = pj.status.length > 0
+    ? pj.status.map(s => `<span class="status-tag ${getStatusClass(s)}">${getStatusIcon(s)} ${s}</span>`).join('')
+    : '<span style="color:#666">Aucun statut</span>';
+  
+  const invCount = pj.inventory?.length || 0;
+  const invTotal = pj.inventory?.reduce((sum, item) => sum + (parseItem(item).qty || 1), 0) || 0;
+  
+  const combatStats = calculateCombatStats(pj);
+  
+  const titleEl = document.getElementById('playerDetailTitle');
+  if (titleEl) titleEl.innerHTML = `📋 ${pj.name}`;
+  
+  const contentEl = document.getElementById('playerDetailContent');
+  if (contentEl) {
+    contentEl.innerHTML = `
+      <div class="player-detail-header">
+        <div class="player-avatar">${getPlayerAvatar(pj)}</div>
+        <div class="player-main-info">
+          <h3>${pj.name}</h3>
+          <p class="player-subtitle">${pj.species || 'Espèce inconnue'} • ${pj.age || '?'} ans</p>
+          <div class="player-level-xp">
+            <span class="badge badge-level">⭐ Niveau ${pj.level || 1}</span>
+            <span class="badge badge-xp">✨ ${pj.xp || 0}/100 XP</span>
+          </div>
+        </div>
+      </div>
+      
+      ${pj.raceBonuses ? `
+      <div class="race-bonuses">
+        ${pj.raceBonuses.map(b => `<div class="race-bonus">${b}</div>`).join('')}
+      </div>
+      ` : ''}
+      
+      <div class="detail-section-player">
+        <h4>💪 Ressources</h4>
+        
+        <div class="resource-detail">
+          <div class="resource-detail-header">
+            <span>❤️ Points de Vie (HP)</span>
+            <span>${pj.hp} / ${pj.maxHp}</span>
+          </div>
+          <div class="resource-bar-large hp-bar-bg">
+            <div class="resource-fill-large hp-fill-color" style="width:${hpPercent}%"></div>
+          </div>
+          <div class="resource-actions">
+            <button onclick="modifyResource('hp', 10)">+10</button>
+            <button onclick="modifyResource('hp', 25)">+25</button>
+            <button onclick="modifyResource('hp', 999)">Full</button>
+            <button onclick="modifyResource('hp', -10)" class="btn-dmg">-10</button>
+            <button onclick="modifyResource('hp', -25)" class="btn-dmg">-25</button>
+          </div>
+        </div>
+        
+        <div class="resource-detail">
+          <div class="resource-detail-header">
+            <span>🔵 Reiatsu (Mana Spirituel)</span>
+            <span>${pj.reiatsu} / ${pj.maxReiatsu}</span>
+          </div>
+          <div class="resource-bar-large reiatsu-bar-bg">
+            <div class="resource-fill-large reiatsu-fill-color" style="width:${reiatsuPercent}%"></div>
+          </div>
+          <div class="resource-actions">
+            <button onclick="modifyResource('reiatsu', 10)">+10</button>
+            <button onclick="modifyResource('reiatsu', 25)">+25</button>
+            <button onclick="modifyResource('reiatsu', 999)">Full</button>
+            <button onclick="modifyResource('reiatsu', -10)" class="btn-dmg">-10</button>
+            <button onclick="modifyResource('reiatsu', -25)" class="btn-dmg">-25</button>
+          </div>
+          <div class="resource-info">Utilisé pour: Kidō, Cero, Heilig Pfeil, techniques spirituelles</div>
+        </div>
+        
+        <div class="resource-detail">
+          <div class="resource-detail-header">
+            <span>🟡 Stamina (Endurance)</span>
+            <span>${pj.stamina} / ${pj.maxStamina}</span>
+          </div>
+          <div class="resource-bar-large stamina-bar-bg">
+            <div class="resource-fill-large stamina-fill-color" style="width:${staminaPercent}%"></div>
+          </div>
+          <div class="resource-actions">
+            <button onclick="modifyResource('stamina', 10)">+10</button>
+            <button onclick="modifyResource('stamina', 25)">+25</button>
+            <button onclick="modifyResource('stamina', 999)">Full</button>
+            <button onclick="modifyResource('stamina', -10)" class="btn-dmg">-10</button>
+            <button onclick="modifyResource('stamina', -25)" class="btn-dmg">-25</button>
+          </div>
+          <div class="resource-info">Utilisé pour: Attaques physiques, Shunpo, Sonído, défense active</div>
+        </div>
+      </div>
+      
+      <div class="detail-section-player">
+        <h4>⚔️ Stats de Combat</h4>
+        <div class="combat-stats-grid">
+          <div class="combat-stat">
+            <span class="combat-stat-icon">⚔️</span>
+            <span class="combat-stat-name">Attaque Physique</span>
+            <span class="combat-stat-value">${combatStats.physicalDamage}</span>
+          </div>
+          <div class="combat-stat">
+            <span class="combat-stat-icon">✨</span>
+            <span class="combat-stat-name">Attaque Spirituelle</span>
+            <span class="combat-stat-value">${combatStats.spiritualDamage}</span>
+          </div>
+          <div class="combat-stat">
+            <span class="combat-stat-icon">🛡️</span>
+            <span class="combat-stat-name">Réduction Dégâts</span>
+            <span class="combat-stat-value">${combatStats.damageReduction}%</span>
+          </div>
+          <div class="combat-stat">
+            <span class="combat-stat-icon">💨</span>
+            <span class="combat-stat-name">Chance d'Esquive</span>
+            <span class="combat-stat-value">${combatStats.dodgeChance}%</span>
+          </div>
+          <div class="combat-stat">
+            <span class="combat-stat-icon">🎯</span>
+            <span class="combat-stat-name">Chance Critique</span>
+            <span class="combat-stat-value">${combatStats.critChance}%</span>
+          </div>
+          <div class="combat-stat">
+            <span class="combat-stat-icon">💥</span>
+            <span class="combat-stat-name">Dégâts Critiques</span>
+            <span class="combat-stat-value">x${combatStats.critDamage}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-section-player">
+        <h4>📊 Attributs</h4>
+        <div class="stats-detail-grid">
+          ${statsHTML}
+        </div>
+      </div>
+      
+      <div class="detail-section-player">
+        <h4>🏷️ Statuts actifs</h4>
+        <div class="status-tags-detail">
+          ${statusHTML}
+        </div>
+        <div class="status-actions">
+          <button onclick="addStatus()">➕ Ajouter statut</button>
+          <button onclick="clearAllStatus()">🗑️ Effacer tout</button>
+        </div>
+      </div>
+      
+      <div class="detail-section-player">
+        <h4>📍 Localisation</h4>
+        <div class="detail-row">
+          <span class="detail-label">Position actuelle</span>
+          <span class="detail-value">${pj.location || 'Inconnu'}</span>
+        </div>
+        <button onclick="openTravel(${index}); closePlayerDetails();" style="margin-top:10px; width:100%;">🚶 Changer de lieu</button>
+      </div>
+      
+      <div class="detail-section-player">
+        <h4>📝 Informations</h4>
+        <div class="detail-row">
+          <span class="detail-label">Langues</span>
+          <span class="detail-value">${pj.languages || '-'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Compétences</span>
+          <span class="detail-value">${pj.skills || '-'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Personnalité</span>
+          <span class="detail-value">${pj.traits || '-'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Objectif</span>
+          <span class="detail-value">${pj.goals || '-'}</span>
+        </div>
+      </div>
+      
+      ${pj.past ? `
+      <div class="detail-section-player">
+        <h4>📖 Background</h4>
+        <p style="color:#ccc; line-height:1.5; margin:0;">${pj.past}</p>
+      </div>
+      ` : ''}
+      
+      <div class="detail-section-player">
+        <h4>🎒 Inventaire</h4>
+        <div class="detail-row">
+          <span class="detail-label">Objets</span>
+          <span class="detail-value">${invCount} type(s), ${invTotal} total</span>
+        </div>
+        <button onclick="openInventory(${index}); closePlayerDetails();" style="margin-top:10px; width:100%;">🎒 Ouvrir l'inventaire</button>
+      </div>
+      
+      <div class="detail-actions">
+        <button class="action-heal" onclick="fullRestore()">💚 Repos complet</button>
+        <button class="action-damage" onclick="customDamage()">💔 Infliger dégâts</button>
+        <button class="action-status" onclick="addStatus()">🏷️ Statut</button>
+        <button class="action-edit" onclick="editPlayer()">✏️ Modifier</button>
+      </div>
+    `;
+  }
+  
+  const modal = document.getElementById('playerDetailModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function calculateCombatStats(pj) {
+  const stats = pj.stats || {};
+  
+  return {
+    physicalDamage: (stats.Hakuda || 0) * 2 + Math.floor((stats.Endurance || 0) / 2),
+    spiritualDamage: Math.floor((stats.Reiatsu || 0) * 2.5),
+    damageReduction: Math.min(50, (stats.Defense || 0) * 3),
+    dodgeChance: Math.min(60, (stats.Hoho || 0) * 4),
+    critChance: Math.min(40, (stats.Intellect || 0) * 3),
+    critDamage: (1.5 + (stats.Intellect || 0) * 0.05).toFixed(2)
+  };
+}
+
+function fullRestore() {
+  if (currentDetailIndex < 0) return;
+  const pj = currentRP.players[currentDetailIndex];
+  
+  pj.hp = pj.maxHp;
+  pj.reiatsu = pj.maxReiatsu;
+  pj.stamina = pj.maxStamina;
+  pj.status = pj.status.filter(s => !['KO', 'Fatigué', 'Épuisé'].includes(s));
+  
+  appendMsg('narrateur', `🌙 ${pj.name} se repose et récupère toutes ses forces !`);
+  appendMsg('system', `💚 HP: ${pj.hp}/${pj.maxHp} | 🔵 Reiatsu: ${pj.reiatsu}/${pj.maxReiatsu} | 🟡 Stamina: ${pj.stamina}/${pj.maxStamina}`);
+  
+  openPlayerDetails(currentDetailIndex);
+  showPlayers(currentRP);
+  syncPlayerUpdate(currentDetailIndex);
+}
+
+function customDamage() {
+  if (currentDetailIndex < 0) return;
+  const pj = currentRP.players[currentDetailIndex];
+  
+  const damageType = prompt(
+    `Quel type de dégâts infliger à ${pj.name}?\n\n` +
+    `1. HP (Points de vie)\n` +
+    `2. Reiatsu (Énergie spirituelle)\n` +
+    `3. Stamina (Endurance)\n\n` +
+    `Entrez le numéro:`
+  );
+  
+  if (!damageType) return;
+  
+  const types = { '1': 'hp', '2': 'reiatsu', '3': 'stamina' };
+  const resource = types[damageType];
+  
+  if (!resource) {
+    alert('Type invalide!');
+    return;
+  }
+  
+  const amount = prompt(`Combien de dégâts ${resource.toUpperCase()}?`);
+  if (!amount) return;
+  
+  const damage = parseInt(amount);
+  if (isNaN(damage) || damage < 0) {
+    alert('Valeur invalide!');
+    return;
+  }
+  
+  modifyResource(resource, -damage);
+}
+
+function addStatus() {
+  if (currentDetailIndex < 0) return;
+  const pj = currentRP.players[currentDetailIndex];
+  
+  const statusList = [
+    { name: 'Empoisonné', effect: '-5 HP/tour', icon: '🤢' },
+    { name: 'Brûlé', effect: '-3 HP/tour', icon: '🔥' },
+    { name: 'Saignement', effect: '-2 HP/tour', icon: '🩸' },
+    { name: 'Paralysé', effect: 'Ne peut pas bouger', icon: '⚡' },
+    { name: 'Gelé', effect: 'Vitesse réduite', icon: '❄️' },
+    { name: 'Fatigué', effect: '-50% Stamina regen', icon: '😴' },
+    { name: 'Épuisé', effect: 'Stamina bloquée', icon: '💤' },
+    { name: 'Confus', effect: '30% échec actions', icon: '😵‍💫' },
+    { name: 'Aveuglé', effect: '-50% précision', icon: '🙈' },
+    { name: 'Drainé', effect: '-5 Reiatsu/tour', icon: '💫' },
+    { name: 'Bouclier', effect: '+20% Défense', icon: '🛡️' },
+    { name: 'Renforcé', effect: '+20% Attaque', icon: '💪' },
+    { name: 'Hâte', effect: '+30% Vitesse', icon: '⚡' },
+    { name: 'Régénération', effect: '+5 HP/tour', icon: '💚' },
+    { name: 'Concentration', effect: '+20% Critique', icon: '🎯' },
+    { name: 'Invisible', effect: 'Indétectable', icon: '👻' }
+  ];
+  
+  const choice = prompt(
+    `Ajouter un statut à ${pj.name}:\n\n` +
+    statusList.map((s, i) => `${i + 1}. ${s.icon} ${s.name} (${s.effect})`).join('\n') +
+    `\n\n0. Personnalisé...\n\nEntrez le numéro:`
+  );
+  
+  if (choice === null) return;
+  
+  let status;
+  const num = parseInt(choice);
+  
+  if (num === 0) {
+    status = prompt('Entrez le nom du statut personnalisé:');
+    if (!status) return;
+  } else if (num >= 1 && num <= statusList.length) {
+    status = statusList[num - 1].name;
+  } else {
+    alert('Choix invalide!');
+    return;
+  }
+  
+  if (!pj.status.includes(status)) {
+    pj.status.push(status);
+    const statusInfo = statusList.find(s => s.name === status);
+    appendMsg('system', `🏷️ ${pj.name} obtient: ${getStatusIcon(status)} ${status}${statusInfo ? ` (${statusInfo.effect})` : ''}`);
+  } else {
+    alert(`${pj.name} a déjà ce statut!`);
+    return;
+  }
+  
+  openPlayerDetails(currentDetailIndex);
+  showPlayers(currentRP);
+  syncPlayerUpdate(currentDetailIndex);
+}
+
+function clearAllStatus() {
+  if (currentDetailIndex < 0) return;
+  const pj = currentRP.players[currentDetailIndex];
+  
+  if (pj.status.length === 0) {
+    alert(`${pj.name} n'a aucun statut.`);
+    return;
+  }
+  
+  if (confirm(`Effacer tous les statuts de ${pj.name}?\n\nStatuts actuels: ${pj.status.join(', ')}`)) {
+    pj.status = [];
+    appendMsg('system', `✨ Tous les statuts de ${pj.name} ont été effacés.`);
+    openPlayerDetails(currentDetailIndex);
+    showPlayers(currentRP);
+    syncPlayerUpdate(currentDetailIndex);
+  }
+}
+
+function getPlayerAvatar(pj) {
+  const species = (pj.species || '').toLowerCase();
+  if (species.includes('arrancar')) return '😈';
+  if (species.includes('hollow')) return '👹';
+  if (species.includes('vizard')) return '🎭';
+  if (species.includes('shinigami')) return '⚔️';
+  if (species.includes('quincy')) return '✝️';
+  if (species.includes('fullbringer')) return '✊';
+  if (species.includes('humain')) return '👤';
+  if (species.includes('âme')) return '👻';
+  if (species.includes('hybrid')) return '🔀';
+  return '🎭';
+}
+
+// ===== SUITE DU CODE CORRIGÉ (PARTIE 7 - FINALE) =====
+
+function editPlayer() {
+  if (currentDetailIndex < 0) return;
+  const pj = currentRP.players[currentDetailIndex];
+  
+  const choice = prompt(
+    `Que voulez-vous modifier pour ${pj.name}?\n\n` +
+    `1. Nom\n` +
+    `2. Âge\n` +
+    `3. Compétences\n` +
+    `4. Personnalité\n` +
+    `5. Objectif\n` +
+    `6. HP Maximum\n` +
+    `7. Reiatsu Maximum\n` +
+    `8. Stamina Maximum\n` +
+    `9. Modifier une stat\n` +
+    `10. Background\n\n` +
+    `Entrez le numéro:`
+  );
+  
+  if (!choice) return;
+  
+  switch (choice) {
+    case '1':
+      const newName = prompt('Nouveau nom:', pj.name);
+      if (newName && newName.trim()) {
+        const oldName = pj.name;
+        pj.name = newName.trim();
+        appendMsg('system', `✏️ ${oldName} renommé en ${pj.name}`);
+      }
+      break;
+      
+    case '2':
+      const newAge = prompt('Nouvel âge:', pj.age);
+      if (newAge) {
+        pj.age = newAge;
+        appendMsg('system', `✏️ Âge de ${pj.name} modifié: ${pj.age}`);
+      }
+      break;
+      
+    case '3':
+      const newSkills = prompt('Compétences:', pj.skills);
+      if (newSkills !== null) {
+        pj.skills = newSkills;
+        appendMsg('system', `✏️ Compétences de ${pj.name} modifiées`);
+      }
+      break;
+      
+    case '4':
+      const newTraits = prompt('Personnalité:', pj.traits);
+      if (newTraits !== null) {
+        pj.traits = newTraits;
+        appendMsg('system', `✏️ Personnalité de ${pj.name} modifiée`);
+      }
+      break;
+      
+    case '5':
+      const newGoals = prompt('Objectif:', pj.goals);
+      if (newGoals !== null) {
+        pj.goals = newGoals;
+        appendMsg('system', `✏️ Objectif de ${pj.name} modifié`);
+      }
+      break;
+      
+    case '6':
+      const newMaxHp = prompt('HP Maximum:', pj.maxHp);
+      if (newMaxHp && !isNaN(parseInt(newMaxHp))) {
+        pj.maxHp = parseInt(newMaxHp);
+        pj.hp = Math.min(pj.hp, pj.maxHp);
+        appendMsg('system', `✏️ HP Max de ${pj.name}: ${pj.maxHp}`);
+      }
+      break;
+      
+    case '7':
+      const newMaxReiatsu = prompt('Reiatsu Maximum:', pj.maxReiatsu);
+      if (newMaxReiatsu && !isNaN(parseInt(newMaxReiatsu))) {
+        pj.maxReiatsu = parseInt(newMaxReiatsu);
+        pj.reiatsu = Math.min(pj.reiatsu, pj.maxReiatsu);
+        appendMsg('system', `✏️ Reiatsu Max de ${pj.name}: ${pj.maxReiatsu}`);
+      }
+      break;
+      
+    case '8':
+      const newMaxStamina = prompt('Stamina Maximum:', pj.maxStamina);
+      if (newMaxStamina && !isNaN(parseInt(newMaxStamina))) {
+        pj.maxStamina = parseInt(newMaxStamina);
+        pj.stamina = Math.min(pj.stamina, pj.maxStamina);
+        appendMsg('system', `✏️ Stamina Max de ${pj.name}: ${pj.maxStamina}`);
+      }
+      break;
+      
+    case '9':
+      editStat();
+      return; // editStat gère déjà la mise à jour
+      
+    case '10':
+      const newPast = prompt('Background / Passé:', pj.past);
+      if (newPast !== null) {
+        pj.past = newPast;
+        appendMsg('system', `✏️ Background de ${pj.name} modifié`);
+      }
+      break;
+      
+    default:
+      alert('Choix invalide!');
+      return;
+  }
+  
+  openPlayerDetails(currentDetailIndex);
+  showPlayers(currentRP);
+  syncPlayerUpdate(currentDetailIndex);
+}
+
+function editStat() {
+  if (currentDetailIndex < 0) return;
+  const pj = currentRP.players[currentDetailIndex];
+  
+  const statDescriptions = {
+    Reiatsu: '🔵 Pression Spirituelle',
+    Endurance: '🟡 Endurance',
+    Hakuda: '👊 Hakuda / Zanjutsu',
+    Defense: '🛡️ Défense',
+    Hoho: '💨 Hohō / Vitesse',
+    Intellect: '🧠 Intellect'
+  };
+  
+  const statKeys = Object.keys(pj.stats);
+  
+  const choice = prompt(
+    `Quelle stat modifier pour ${pj.name}?\n\n` +
+    statKeys.map((k, i) => `${i + 1}. ${statDescriptions[k] || k}: ${pj.stats[k]}`).join('\n') +
+    `\n\nEntrez le numéro:`
+  );
+  
+  if (!choice) return;
+  
+  const index = parseInt(choice) - 1;
+  if (isNaN(index) || index < 0 || index >= statKeys.length) {
+    alert('Choix invalide!');
+    return;
+  }
+  
+  const statKey = statKeys[index];
+  const newValue = prompt(`Nouvelle valeur pour ${statDescriptions[statKey] || statKey}:`, pj.stats[statKey]);
+  
+  if (newValue && !isNaN(parseInt(newValue))) {
+    const oldValue = pj.stats[statKey];
+    pj.stats[statKey] = Math.max(0, Math.min(20, parseInt(newValue)));
+    appendMsg('system', `✏️ ${pj.name}: ${statDescriptions[statKey] || statKey} ${oldValue} → ${pj.stats[statKey]}`);
+    
+    openPlayerDetails(currentDetailIndex);
+    showPlayers(currentRP);
+    syncPlayerUpdate(currentDetailIndex);
+  }
+}
+
+function closePlayerDetails() {
+  const modal = document.getElementById('playerDetailModal');
+  if (modal) modal.style.display = 'none';
+  currentDetailIndex = -1;
+}
+
+// ===== MAP DATA =====
+
+const MAP_DATA = {
+  monde_humain: [
+    {
+      id: 'karakura',
+      name: 'Karakura Town',
+      icon: '🏙️',
+      desc: 'Ville principale où réside Ichigo',
+      weather: { type: 'sunny', name: 'Ensoleillé', temp: '22°C', desc: 'Ciel dégagé, légère brise' },
+      shops: [
+        { name: 'Urahara Shop', icon: '🏪', status: 'open', owner: 'Kisuke Urahara', items: ['Gigai', 'Soul Candy', 'Objets spirituels'] },
+        { name: 'Konbini 24h', icon: '🏬', status: 'open', owner: 'Vendeur', items: ['Nourriture', 'Boissons', 'Magazines'] }
+      ],
+      npcs: [
+        { name: 'Kisuke Urahara', role: 'Marchand / Ex-Capitaine', icon: '🎩', attitude: 'friendly' },
+        { name: 'Tessai Tsukabishi', role: 'Assistant', icon: '👨', attitude: 'friendly' }
+      ],
+      events: [{ name: 'Hollow Alert', icon: '👻', desc: 'Des Hollows apparaissent parfois la nuit' }]
+    }
+  ],
+  soul_society: [
+    {
+      id: 'seireitei',
+      name: 'Seireitei',
+      icon: '⛩️',
+      desc: 'Cité fortifiée des Shinigami',
+      weather: { type: 'clear', name: 'Clair', temp: '18°C', desc: 'Air pur et spirituel' },
+      shops: [{ name: 'Armurerie du Gotei', icon: '⚔️', status: 'open', owner: 'Intendance', items: ['Zanpakutō standards', 'Uniformes'] }],
+      npcs: [{ name: 'Gardes Shinigami', role: 'Patrouille', icon: '💂', attitude: 'neutral' }],
+      events: [{ name: 'Patrouilles actives', icon: '🚨', desc: 'Sécurité renforcée' }]
+    }
+  ],
+  hueco_mundo: [
+    {
+      id: 'las_noches',
+      name: 'Las Noches',
+      icon: '🏰',
+      desc: 'Palais d\'Aizen au Hueco Mundo',
+      weather: { type: 'night', name: 'Nuit éternelle', temp: '???', desc: 'Ciel toujours noir' },
+      shops: [],
+      npcs: [{ name: 'Sōsuke Aizen', role: 'Seigneur', icon: '👑', attitude: 'hostile' }],
+      events: [{ name: 'Surveillance constante', icon: '👁️', desc: 'Les Espada patrouillent' }]
+    }
+  ],
+  autres: [
+    {
+      id: 'dangai',
+      name: 'Dangai',
+      icon: '🌀',
+      desc: 'Passage entre les mondes',
+      weather: { type: 'void', name: 'Néant', temp: '???', desc: 'Espace-temps instable' },
+      shops: [],
+      npcs: [{ name: 'Kōtotsu', role: 'Nettoyeur', icon: '🚂', attitude: 'hostile' }],
+      events: [{ name: 'Temps instable', icon: '⏰', desc: 'Le temps s\'écoule différemment' }]
+    }
+  ]
+};
+
+// ===== FONCTIONS MAP =====
+
+function openMap() {
+  currentMapRegion = 'monde_humain';
+  selectedLocation = null;
+  
+  document.querySelectorAll('.region-btn').forEach(btn => btn.classList.remove('active'));
+  const firstBtn = document.querySelector('.region-btn');
+  if (firstBtn) firstBtn.classList.add('active');
+  
+  renderMapLocations();
+  renderLocationDetails(null);
+  
+  const modal = document.getElementById("mapModal");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeMap() {
+  const modal = document.getElementById("mapModal");
+  if (modal) modal.style.display = "none";
+}
+
+function selectMapRegion(region) {
+  currentMapRegion = region;
+  selectedLocation = null;
+  
+  document.querySelectorAll('.region-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.onclick && btn.onclick.toString().includes(region)) {
+      btn.classList.add('active');
+    }
   });
-  const r=await res.json();
-  if(r.ok) alert("✅ Sauvegardé dans data/rp.json");
-  else alert("❌ Erreur : "+r.error);
+  
+  renderMapLocations();
+  renderLocationDetails(null);
 }
 
-loadData();
+function renderMapLocations() {
+  const locations = MAP_DATA[currentMapRegion] || [];
+  const container = document.getElementById("mapLocations");
+  
+  if (!container) return;
+  
+  container.innerHTML = locations.map(loc => {
+    const playersHere = currentRP?.players?.filter(p => 
+      p.location?.toLowerCase() === loc.name.toLowerCase()
+    ) || [];
+    
+    const isSelected = selectedLocation?.id === loc.id;
+    const isLocked = loc.locked || false;
+    
+    let classes = "map-location";
+    if (isSelected) classes += " selected";
+    if (isLocked) classes += " locked";
+    
+    return `
+      <div class="${classes}" onclick="${isLocked ? '' : `selectMapLocation('${loc.id}')`}">
+        <span class="loc-icon">${loc.icon}</span>
+        <span class="loc-name">${loc.name}</span>
+        ${playersHere.length > 0 ? `<div class="loc-players">👥 ${playersHere.length} joueur(s)</div>` : ''}
+        ${isLocked ? '<div class="loc-players">🔒 Verrouillé</div>' : ''}
+      </div>
+    `;
+  }).join("");
+}
+
+function selectMapLocation(locId) {
+  const locations = MAP_DATA[currentMapRegion] || [];
+  selectedLocation = locations.find(l => l.id === locId);
+  
+  renderMapLocations();
+  renderLocationDetails(selectedLocation);
+}
+
+function renderLocationDetails(location) {
+  const container = document.getElementById("locationDetails");
+  
+  if (!container) return;
+  
+  if (!location) {
+    container.innerHTML = `
+      <div class="location-placeholder">
+        <span>👆</span>
+        <p>Sélectionnez un lieu pour voir les détails</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const playersHere = currentRP?.players?.filter(p => 
+    p.location?.toLowerCase() === location.name.toLowerCase()
+  ) || [];
+  
+  container.innerHTML = `
+    <div class="location-header">
+      <span class="header-icon">${location.icon}</span>
+      <div class="header-info">
+        <h3>${location.name}</h3>
+        <p>${location.desc}</p>
+      </div>
+    </div>
+    
+    ${location.weather ? `
+    <div class="weather-box">
+      <span class="weather-icon">${getWeatherIcon(location.weather.type)}</span>
+      <div class="weather-info">
+        <div class="weather-name">${location.weather.name}</div>
+        <div class="weather-desc">${location.weather.desc}</div>
+        <div class="weather-temp">🌡️ ${location.weather.temp}</div>
+      </div>
+    </div>
+    ` : ''}
+    
+    <div class="detail-section">
+      <h4>👥 Joueurs présents</h4>
+      ${playersHere.length > 0 ? `
+        <div class="players-list">
+          ${playersHere.map(p => `
+            <div class="player-tag">
+              <span>${p.name}</span>
+              <span class="player-level">Niv.${p.level || 1}</span>
+            </div>
+          `).join("")}
+        </div>
+      ` : '<div class="empty-section">Aucun joueur ici</div>'}
+    </div>
+    
+    <div class="detail-section">
+      <h4>🎭 PNJ présents</h4>
+      ${location.npcs?.length > 0 ? `
+        <div class="npc-list">
+          ${location.npcs.map(npc => `
+            <div class="npc-card">
+              <span class="npc-icon">${npc.icon || '👤'}</span>
+              <div class="npc-info">
+                <div class="npc-name">${npc.name}</div>
+                <div class="npc-role">${npc.role || ''}</div>
+              </div>
+              <span class="npc-attitude ${npc.attitude || 'unknown'}">${getAttitudeLabel(npc.attitude)}</span>
+            </div>
+          `).join("")}
+        </div>
+      ` : '<div class="empty-section">Aucun PNJ visible</div>'}
+    </div>
+    
+    <div style="margin-top: 20px; text-align: center;">
+      <button class="confirm" onclick="quickTravelTo('${location.name}')" style="max-width: 300px;">
+        🚶 Voyager ici
+      </button>
+    </div>
+  `;
+}
+
+function getWeatherIcon(type) {
+  const icons = {
+    sunny: '☀️', cloudy: '☁️', rainy: '🌧️', stormy: '⛈️',
+    snowy: '❄️', foggy: '🌫️', night: '🌙', clear: '✨',
+    dark: '🌑', void: '🌀', divine: '💫'
+  };
+  return icons[type] || '🌤️';
+}
+
+function getAttitudeLabel(attitude) {
+  switch (attitude) {
+    case 'friendly': return '😊 Amical';
+    case 'neutral': return '😐 Neutre';
+    case 'hostile': return '😠 Hostile';
+    default: return '❓ Inconnu';
+  }
+}
+
+function quickTravelTo(locationName) {
+  if (!currentRP || !currentRP.players || currentRP.players.length === 0) {
+    alert("Aucun joueur disponible!");
+    return;
+  }
+  
+  const playerNames = currentRP.players.map((p, i) => `${i + 1}. ${p.name} (${p.location || 'Inconnu'})`).join('\n');
+  const choice = prompt(`Quel joueur déplacer vers "${locationName}"?\n\n${playerNames}\n\nNuméro:`);
+  
+  if (!choice) return;
+  
+  const index = parseInt(choice) - 1;
+  if (isNaN(index) || index < 0 || index >= currentRP.players.length) {
+    alert("Numéro invalide!");
+    return;
+  }
+  
+  const player = currentRP.players[index];
+  const oldLocation = player.location || "Inconnu";
+  
+  if (oldLocation.toLowerCase() === locationName.toLowerCase()) {
+    alert(`${player.name} est déjà à ${locationName}!`);
+    return;
+  }
+  
+  player.location = locationName;
+  
+  renderMapLocations();
+  renderLocationDetails(selectedLocation);
+  showPlayers(currentRP);
+  syncPlayerUpdate(index);
+  
+  appendMsg("narrateur", `📍 ${player.name} se déplace de "${oldLocation}" vers "${locationName}".`);
+  alert(`✅ ${player.name} est maintenant à ${locationName}!`);
+}
+
+// ===== SAUVEGARDE =====
+
+async function saveData() {
+  try {
+    const res = await fetch("/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(allData)
+    });
+    const r = await res.json();
+    if (r.ok) {
+      alert("✅ Sauvegardé !");
+    } else {
+      alert("❌ Erreur : " + r.error);
+    }
+  } catch (e) {
+    alert("❌ Erreur : " + e.message);
+  }
+}
+
+// ===== FIN DU SCRIPT =====
 </script>
 </body>
 </html>

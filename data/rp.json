@@ -1,7 +1,74 @@
 {
   "rp1": {
     "title": "RP1 – Karakura Night",
-    "players": [],
+    "players": [
+      {
+        "name": "Aoi",
+        "age": "1",
+        "past": "hey",
+        "species": "Fullbringer",
+        "skills": "aa",
+        "languages": "anglais",
+        "traits": "a",
+        "goals": "a",
+        "inventory": [],
+        "level": 1,
+        "xp": 0,
+        "location": "Lycée Karakura",
+        "hp": 70,
+        "maxHp": 70,
+        "reiatsu": 71,
+        "maxReiatsu": 71,
+        "stamina": 58,
+        "maxStamina": 58,
+        "status": [
+          "Drainé"
+        ],
+        "stats": {
+          "Reiatsu": 7,
+          "Endurance": 6,
+          "Hakuda": 7,
+          "Defense": 2,
+          "Hoho": 7,
+          "Intellect": 4
+        },
+        "raceBonuses": [
+          "✊ Fullbringer: Stats équilibrées, Polyvalent"
+        ]
+      },
+      {
+        "name": "shiori",
+        "age": "50",
+        "past": "KENPACHIER",
+        "species": "Shinigami",
+        "skills": "HACHE DE LA MORT",
+        "languages": "français",
+        "traits": "RENTRE DEDANS",
+        "goals": "TUER LES FANTOMAX",
+        "inventory": [],
+        "level": 1,
+        "xp": 0,
+        "location": "Karakura Town",
+        "hp": 95,
+        "maxHp": 95,
+        "reiatsu": 62,
+        "maxReiatsu": 62,
+        "stamina": 49,
+        "maxStamina": 49,
+        "status": [],
+        "stats": {
+          "Reiatsu": 4,
+          "Endurance": 3,
+          "Hakuda": 8,
+          "Defense": 5,
+          "Hoho": 4,
+          "Intellect": 2
+        },
+        "raceBonuses": [
+          "⚔️ Shinigami: +20 HP, +20 Reiatsu, Hakuda élevé"
+        ]
+      }
+    ],
     "npcs": [
       {
         "name": "Kisuke Urahara",
@@ -203,6 +270,10 @@
           "hidden": "Capacité liée à la causalité temporelle."
         }
       ]
+    },
+    "rpTime": {
+      "date": "2024-04-01T09:05:00.000Z",
+      "tour": 2
     }
   }
 }
