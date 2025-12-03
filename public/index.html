@@ -517,6 +517,156 @@ button.confirm:hover{background:#0099ff;}
 .inv-item.consumable { border-left: 3px solid #4caf50; }
 .inv-item.key { border-left: 3px solid #ffd700; }
 .inv-item.misc { border-left: 3px solid #9e9e9e; }
+
+/* --- EMPLACEMENT SUR LA CARTE --- */
+.location-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin: 8px 0;
+  border-left: 3px solid #58a6ff;
+}
+
+.location-icon {
+  font-size: 1.1em;
+}
+
+.location-name {
+  color: #58a6ff;
+  font-weight: 600;
+}
+
+/* --- MODALE DÉPLACEMENT --- */
+.current-location {
+  background: #1a1a1a;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 20px;
+  border: 1px solid #333;
+}
+
+.current-location span {
+  color: #888;
+  display: block;
+  font-size: 0.9em;
+  margin-bottom: 5px;
+}
+
+.current-location strong {
+  color: #58a6ff;
+  font-size: 1.3em;
+}
+
+.travel-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  flex: 1;
+  min-width: 120px;
+  background: #222;
+  border: 1px solid #333;
+  color: #aaa;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.tab-btn:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.tab-btn.active {
+  background: #58a6ff;
+  color: #000;
+  border-color: #58a6ff;
+  font-weight: bold;
+}
+
+.locations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  max-height: 350px;
+  overflow-y: auto;
+  padding: 5px;
+}
+
+.location-card {
+  background: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.location-card:hover {
+  background: #2a2a2a;
+  border-color: #58a6ff;
+  transform: translateY(-2px);
+}
+
+.location-card.current {
+  background: #1a3a1a;
+  border-color: #4caf50;
+}
+
+.location-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.location-card .loc-icon {
+  font-size: 1.8em;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.location-card .loc-name {
+  font-size: 0.9em;
+  color: #eee;
+  font-weight: 500;
+}
+
+.location-card .loc-desc {
+  font-size: 0.75em;
+  color: #777;
+  margin-top: 4px;
+}
+
+.location-card.current .loc-name {
+  color: #4caf50;
+}
+
+.travel-footer {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #333;
+  text-align: center;
+  color: #666;
+}
+
+/* Animation de voyage */
+@keyframes traveling {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.traveling {
+  animation: traveling 0.5s ease;
+}
 </style>
 </head>
 <body>
@@ -659,6 +809,31 @@ button.confirm:hover{background:#0099ff;}
     </div>
   </div>
 </div>
+<!-- ===== MODALE : DÉPLACEMENT ===== -->
+<div class="modal" id="travelModal">
+  <div class="modal-content" style="max-width:600px;">
+    <span class="close" onclick="closeTravel()">&times;</span>
+    <h2 class="form-title" id="travelTitle">🚶 Déplacement</h2>
+    
+    <div class="current-location">
+      <span>Position actuelle :</span>
+      <strong id="currentLocationDisplay">—</strong>
+    </div>
+    
+    <div class="travel-tabs">
+      <button class="tab-btn active" onclick="showRegion('monde_humain')">🌆 Monde Humain</button>
+      <button class="tab-btn" onclick="showRegion('soul_society')">⛩️ Soul Society</button>
+      <button class="tab-btn" onclick="showRegion('hueco_mundo')">🏜️ Hueco Mundo</button>
+      <button class="tab-btn" onclick="showRegion('autres')">🌀 Autres</button>
+    </div>
+    
+    <div id="locationsList" class="locations-grid"></div>
+    
+    <div class="travel-footer">
+      <small>💡 Certains lieux peuvent nécessiter des conditions spéciales pour y accéder.</small>
+    </div>
+  </div>
+</div>
 <script>
 let allData={}, currentRP;
 
@@ -686,7 +861,7 @@ function showPlayers(rp){
     let statsHTML = "";
     if(p.stats){
       const values = Object.values(p.stats);
-      const maxStat = Math.max(...values, 1); // Évite division par 0
+      const maxStat = Math.max(...values, 1);
       
       statsHTML = `<div class="stats-grid">
         <div class="stats-header">
@@ -716,6 +891,13 @@ function showPlayers(rp){
         <div class="level-badge">Niv. ${p.level || 1}</div>
       </div>
       <div class="species">${p.species}</div>
+      
+      <!-- ⬇️ NOUVEAU : Affichage de l'emplacement -->
+      <div class="location-info">
+        <span class="location-icon">📍</span>
+        <span class="location-name">${p.location || "Inconnu"}</span>
+      </div>
+      
       <div class="xp-bar">
         <div class="xp-fill" style="width:${(p.xp || 0) % 100}%"></div>
         <span class="xp-text">XP: ${p.xp || 0}/100</span>
@@ -728,6 +910,7 @@ function showPlayers(rp){
       ${statsHTML}
       <div class="card-buttons">
         <button class='btn' onclick='openInventory(${i})'>🎒 Inventaire</button>
+        <button class='btn' onclick='openTravel(${i})'>🚶 Déplacement</button>
         <button class='btn' onclick='addXP(${i})'>⭐ +10 XP</button>
         <button class='btn' onclick='deleteCard(${i})'>🗑️ Supprimer</button>
       </div>
@@ -810,6 +993,7 @@ function saveNew(){
     // ⬇️ NOUVEAU : Niveau et stats automatiques
     level: 1,
     xp: 0,
+    location: "Karakura Town",
     stats: {
       Reiatsu: randomStat(),
       Zanjutsu: randomStat(),
