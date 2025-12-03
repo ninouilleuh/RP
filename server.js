@@ -624,6 +624,26 @@ io.on("connection", (socket) => {
 });
 
 // ===== ROUTE API POUR TEST HF (optionnel) =====
+// ===== ROUTES API =====
+
+// Route racine - IMPORTANT pour Railway healthcheck
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/health", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString(),
+    players: gameState.connectedPlayers.length 
+  });
+});
+
+app.get("/data/rp.json", (req, res) => {
+  res.json(gameState.rpData);
+});
+
+// ... reste du code
 app.post("/hf", async (req, res) => {
   const userMsg = req.body.message;
   
