@@ -17,7 +17,6 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, "public")));
 
 // ===== CONFIGURATION =====
 const MAX_CHAT_HISTORY = 500;
@@ -152,12 +151,24 @@ function advanceToNextTurn() {
 // ===== CHARGER LES DONNÉES =====
 loadGameData();
 
-// ===== ROUTES API =====
+// ===== ROUTES API (AVANT express.static) =====
 
+// Health check - Railway l'utilise
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    players: gameState.connectedPlayers.length,
+    rps: Object.keys(gameState.rpData || {}).length
+  });
+});
+
+// Données RP
 app.get("/data/rp.json", (req, res) => {
   res.json(gameState.rpData);
 });
 
+// Sauvegarde
 app.post("/save", (req, res) => {
   try {
     gameState.rpData = req.body;
@@ -172,17 +183,7 @@ app.post("/save", (req, res) => {
   }
 });
 
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    players: gameState.connectedPlayers.length,
-    rps: Object.keys(gameState.rpData || {}).length,
-    chatMessages: gameState.chat.length,
-    oocMessages: gameState.oocChat.length
-  });
-});
-
-// ===== HUGGING FACE IA (FORMAT CORRIGÉ) =====
+// ===== HUGGING FACE IA =====
 const HF_TOKEN = process.env.HF_TOKEN;
 
 async function getAIResponse(context, characterName, playerMessage) {
@@ -191,14 +192,11 @@ async function getAIResponse(context, characterName, playerMessage) {
     return null;
   }
 
-  // Protection contre undefined
   if (!characterName || typeof characterName !== 'string') {
-    console.error("❌ characterName invalide:", characterName);
     characterName = "Personnage";
   }
   
   if (!playerMessage || typeof playerMessage !== 'string') {
-    console.error("❌ playerMessage invalide:", playerMessage);
     return null;
   }
   
@@ -223,8 +221,6 @@ Contexte actuel: ${context}`;
   const userMessage = `Action de ${characterName}: ${playerMessage}`;
 
   console.log("📤 Envoi à HF...");
-  console.log("   characterName:", characterName);
-  console.log("   message:", playerMessage.substring(0, 50) + "...");
 
   try {
     const response = await fetch(
@@ -236,7 +232,7 @@ Contexte actuel: ${context}`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "openai/gpt-oss-20b:groq",
+          model: "mistralai/Mistral-7B-Instruct-v0.2",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessage }
@@ -249,7 +245,6 @@ Contexte actuel: ${context}`;
 
     const text = await response.text();
     console.log("📥 Status:", response.status);
-    console.log("📥 Réponse:", text.substring(0, 300));
 
     if (!response.ok) {
       console.error("❌ Erreur HF API:", response.status, text);
@@ -260,31 +255,17 @@ Contexte actuel: ${context}`;
     try {
       data = JSON.parse(text);
     } catch (e) {
-      console.error("❌ Erreur parsing JSON:", e.message);
       return null;
     }
 
-    let reply = null;
-
-    // Format OpenAI
     if (data.choices?.[0]?.message?.content) {
-      reply = data.choices[0].message.content.trim();
+      return data.choices[0].message.content.trim();
     }
-    // Format ancien HF
-    else if (Array.isArray(data) && data[0]?.generated_text) {
-      reply = data[0].generated_text.trim();
-    }
-    // Erreur
-    else if (data.error) {
-      console.error("❌ Erreur HF:", data.error);
-      return null;
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      return data[0].generated_text.trim();
     }
 
-    if (reply) {
-      console.log("✅ Réponse IA:", reply.substring(0, 100) + "...");
-    }
-
-    return reply;
+    return null;
 
   } catch (err) {
     console.error("❌ Erreur IA:", err.message);
@@ -292,12 +273,47 @@ Contexte actuel: ${context}`;
   }
 }
 
+// Test HF API
+app.post("/hf", async (req, res) => {
+  const userMsg = req.body.message;
+  
+  if (!HF_TOKEN) {
+    return res.status(401).json({ error: "HF_TOKEN manquant" });
+  }
+
+  if (!userMsg) {
+    return res.status(400).json({ error: "Message manquant" });
+  }
+
+  try {
+    const reply = await getAIResponse("Test", "Testeur", userMsg);
+    res.json({ reply: reply || "(Pas de réponse)" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== FICHIERS STATIQUES (APRÈS les routes API) =====
+app.use(express.static(path.join(__dirname, "public")));
+
+// Route fallback pour SPA (si index.html n'existe pas dans public)
+app.get("*", (req, res) => {
+  const indexPath = path.join(__dirname, "public", "index.html");
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.json({ 
+      status: "Bleach RP Server running",
+      message: "Créez un fichier public/index.html pour l'interface"
+    });
+  }
+});
+
 // ===== SOCKET.IO - TEMPS RÉEL =====
 
 io.on("connection", (socket) => {
   console.log(`🟢 Connexion: ${socket.id}`);
 
-  // === REJOINDRE LA PARTIE ===
   socket.on("joinGame", (data) => {
     let visitorName, characterIndex;
     
@@ -348,7 +364,6 @@ io.on("connection", (socket) => {
     io.emit("playersUpdated", gameState.connectedPlayers);
   });
 
-  // === SÉLECTION DE PERSONNAGE ===
   socket.on("selectCharacter", (characterIndex) => {
     socket.characterIndex = characterIndex;
     
@@ -357,24 +372,11 @@ io.on("connection", (socket) => {
       player.characterIndex = characterIndex;
     }
     
-    const rp = getCurrentRP();
-    const character = rp?.players?.[characterIndex];
-    
-    if (character) {
-      console.log(`🎭 ${socket.visitorName} joue maintenant ${character.name}`);
-    }
-    
     io.emit("playersUpdated", gameState.connectedPlayers);
   });
 
-  // === ENVOYER UN MESSAGE RP ===
   socket.on("sendMessage", async (data) => {
-    console.log("📩 sendMessage reçu:", JSON.stringify(data));
-    
-    if (!data?.text || typeof data.text !== 'string') {
-      console.log("❌ Pas de texte valide");
-      return;
-    }
+    if (!data?.text || typeof data.text !== 'string') return;
     
     const type = data.type || 'joueur';
     const text = data.text.trim().substring(0, 2000);
@@ -382,19 +384,14 @@ io.on("connection", (socket) => {
     
     if (!text) return;
     
-    // Résoudre le nom du personnage
     let characterName = data.characterName;
-    
     if (!characterName && characterIndex >= 0) {
       const rp = getCurrentRP();
       characterName = rp?.players?.[characterIndex]?.name;
     }
-    
     if (!characterName) {
       characterName = socket.visitorName || 'Personnage inconnu';
     }
-    
-    console.log("✅ characterName résolu:", characterName);
     
     const authorName = type === 'joueur' ? characterName : (socket.visitorName || 'MJ');
     
@@ -411,7 +408,6 @@ io.on("connection", (socket) => {
     
     io.emit("chatMessage", message);
     
-    // Si message joueur et IA activée
     if (type === 'joueur' && HF_TOKEN && characterIndex >= 0) {
       io.emit("aiTyping", true);
       
@@ -419,12 +415,7 @@ io.on("connection", (socket) => {
         const rp = getCurrentRP();
         const character = rp?.players?.[characterIndex];
         const location = character?.location || 'Karakura Town';
-        const context = `Lieu: ${location}. Tour ${gameState.turnSystem.roundNumber}. Espèce: ${character?.species || 'Inconnu'}. HP: ${character?.hp || '?'}/${character?.maxHp || '?'}.`;
-        
-        console.log("🤖 Appel IA:");
-        console.log("   context:", context);
-        console.log("   characterName:", characterName);
-        console.log("   text:", text);
+        const context = `Lieu: ${location}. Tour ${gameState.turnSystem.roundNumber}. Espèce: ${character?.species || 'Inconnu'}.`;
         
         const aiReply = await getAIResponse(context, characterName, text);
         
@@ -438,19 +429,15 @@ io.on("connection", (socket) => {
             timestamp: new Date().toISOString()
           });
           io.emit("chatMessage", aiMessage);
-          console.log("✅ Message IA envoyé");
-        } else {
-          console.log("⚠️ Pas de réponse IA valide");
         }
       } catch (err) {
-        console.error("❌ Erreur réponse IA:", err);
+        console.error("❌ Erreur IA:", err);
       }
       
       io.emit("aiTyping", false);
     }
   });
 
-  // === MESSAGES OOC (Hors RP) ===
   socket.on("sendOOC", (data) => {
     if (!data?.text || typeof data.text !== 'string') return;
     
@@ -468,7 +455,6 @@ io.on("connection", (socket) => {
     io.emit("oocMessage", message);
   });
 
-  // === SYSTÈME DE TOUR ===
   socket.on("nextTurn", () => {
     if (!gameState.turnSystem.enabled) return;
     
@@ -578,7 +564,6 @@ io.on("connection", (socket) => {
     io.emit("turnChanged", { turnSystem: gameState.turnSystem });
   });
 
-  // === MISE À JOUR DES DONNÉES ===
   socket.on("updatePlayer", (data) => {
     const { playerIndex, updates } = data;
     const rp = getCurrentRP();
@@ -605,7 +590,6 @@ io.on("connection", (socket) => {
     io.emit("oocCleared");
   });
 
-    // === DÉCONNEXION ===
   socket.on("disconnect", () => {
     const visitorName = socket.visitorName || 'Inconnu';
     console.log(`🔴 ${visitorName} déconnecté`);
@@ -621,92 +605,6 @@ io.on("connection", (socket) => {
     io.emit("chatMessage", leaveMsg);
     io.emit("playersUpdated", gameState.connectedPlayers);
   });
-});
-
-// ===== ROUTE API POUR TEST HF (optionnel) =====
-// ===== ROUTES API =====
-
-// Route racine - IMPORTANT pour Railway healthcheck
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-app.get("/health", (req, res) => {
-  res.json({ 
-    status: "ok", 
-    timestamp: new Date().toISOString(),
-    players: gameState.connectedPlayers.length 
-  });
-});
-
-app.get("/data/rp.json", (req, res) => {
-  res.json(gameState.rpData);
-});
-
-// ... reste du code
-app.post("/hf", async (req, res) => {
-  const userMsg = req.body.message;
-  
-  if (!HF_TOKEN) {
-    return res.status(401).json({ error: "HF_TOKEN manquant" });
-  }
-
-  if (!userMsg) {
-    return res.status(400).json({ error: "Message manquant" });
-  }
-
-  const systemPrompt = `Tu es un narrateur pour un roleplay Bleach. Réponds en français de manière immersive.`;
-
-  try {
-    const response = await fetch(
-      "https://router.huggingface.co/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${HF_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-20b:groq",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userMsg }
-          ],
-          max_tokens: 500,
-          temperature: 0.8
-        }),
-      }
-    );
-
-    const text = await response.text();
-    console.log("Status:", response.status);
-    console.log("Réponse:", text.substring(0, 300));
-
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      return res.json({ reply: "⚠️ Erreur parsing: " + text.substring(0, 100) });
-    }
-    
-    let reply = "(Pas de réponse)";
-    
-    if (data.choices?.[0]?.message?.content) {
-      reply = data.choices[0].message.content.trim();
-    }
-    else if (Array.isArray(data) && data[0]?.generated_text) {
-      reply = data[0].generated_text.trim();
-    }
-    else if (data.error) {
-      reply = "⚠️ " + (typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
-    }
-    
-    res.json({ reply });
-    
-  } catch (err) {
-    console.error("Erreur:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 // ===== DÉMARRAGE =====
