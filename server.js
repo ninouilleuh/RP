@@ -18,6 +18,18 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/data/rp.json", (req, res) => {
+  res.json(gameState.rpData);
+});
+
 // ===== CONFIGURATION =====
 const MAX_CHAT_HISTORY = 500;
 const MAX_OOC_HISTORY = 200;
@@ -153,20 +165,6 @@ loadGameData();
 
 // ===== ROUTES API (AVANT express.static) =====
 
-// Health check - Railway l'utilise
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    players: gameState.connectedPlayers.length,
-    rps: Object.keys(gameState.rpData || {}).length
-  });
-});
-
-// Données RP
-app.get("/data/rp.json", (req, res) => {
-  res.json(gameState.rpData);
-});
 
 // Sauvegarde
 app.post("/save", (req, res) => {
@@ -296,18 +294,7 @@ app.post("/hf", async (req, res) => {
 // ===== FICHIERS STATIQUES (APRÈS les routes API) =====
 app.use(express.static(path.join(__dirname, "public")));
 
-// Route fallback pour SPA (si index.html n'existe pas dans public)
-app.get("*", (req, res) => {
-  const indexPath = path.join(__dirname, "public", "index.html");
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.json({ 
-      status: "Bleach RP Server running",
-      message: "Créez un fichier public/index.html pour l'interface"
-    });
-  }
-});
+
 
 // ===== SOCKET.IO - TEMPS RÉEL =====
 
