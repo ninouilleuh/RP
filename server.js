@@ -26,6 +26,28 @@ process.on('unhandledRejection', (reason) => {
   console.error('❌ Unhandled Rejection:', reason);
 });
 
+// Handle termination signals (helpful for PaaS debugging)
+function gracefulShutdown(signal) {
+  console.log(`⚠️ Received ${signal} - closing server gracefully...`);
+  try {
+    server.close(() => {
+      console.log('✅ Server closed, exiting.');
+      process.exit(0);
+    });
+    // Force exit if close doesn't finish in time
+    setTimeout(() => {
+      console.error('❌ Forced exit after timeout');
+      process.exit(1);
+    }, 10000).unref();
+  } catch (err) {
+    console.error('❌ Error during shutdown:', err);
+    process.exit(1);
+  }
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 // ===== CONFIGURATION =====
 const MAX_CHAT_HISTORY = 500;
 const MAX_OOC_HISTORY = 200;
@@ -157,11 +179,14 @@ function advanceToNextTurn() {
 }
 
 // ===== CHARGER LES DONNÉES =====
+console.log('🔄 Loading game data...');
 loadGameData();
+console.log('✅ Game data loaded successfully');
 
 // ===== ROUTES API (AVANT express.static) =====
 app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
+  console.log('📍 Health check ping');
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 app.get("/", (req, res) => {
@@ -609,9 +634,17 @@ if (!process.env.PORT) {
 }
 
 console.log(`🕒 Démarrage: ${new Date().toISOString()}`);
+console.log(`🌍 Environment: NODE_ENV=${process.env.NODE_ENV || 'development'}`);
+console.log(`💾 Data file: ${DATA_PATH}`);
+console.log(`🔗 Listening on ${HOST}:${PORT}...`);
 
 server.listen(PORT, HOST, () => {
-  console.log(`🚀 Serveur démarré sur ${HOST}:${PORT}`);
+  console.log(`🚀 Serveur ACTIVE sur ${HOST}:${PORT}`);
   console.log(`📡 WebSocket prêt`);
   console.log(`🤖 IA: ${HF_TOKEN ? 'Activée' : 'Désactivée (HF_TOKEN non défini)'}`);
+  console.log(`✅ Ready to accept connections`);
+});
+
+server.on('error', (err) => {
+  console.error('❌ Server error:', err);
 });
