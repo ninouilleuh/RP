@@ -593,7 +593,8 @@ io.on("connection", (socket) => {
 });
 
 // ===== DÉMARRAGE =====
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
+
 server.listen(PORT, () => {
   console.log(`🚀 Serveur: http://localhost:${PORT}`);
   console.log(`📡 WebSocket prêt`);
