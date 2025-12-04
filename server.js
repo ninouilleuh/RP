@@ -18,6 +18,14 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// Global error handlers to surface crashes in PaaS logs
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('❌ Unhandled Rejection:', reason);
+});
+
 // ===== CONFIGURATION =====
 const MAX_CHAT_HISTORY = 500;
 const MAX_OOC_HISTORY = 200;
@@ -593,11 +601,17 @@ io.on("connection", (socket) => {
 });
 
 // ===== DÉMARRAGE =====
-const PORT = process.env.PORT;
-if (!PORT) throw new Error("PORT not defined in environment");
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
-server.listen(PORT, () => {
-  console.log(`🚀 Serveur: http://localhost:${PORT}`);
+if (!process.env.PORT) {
+  console.warn('⚠️ PORT not defined in environment; defaulting to 3000 (development only)');
+}
+
+console.log(`🕒 Démarrage: ${new Date().toISOString()}`);
+
+server.listen(PORT, HOST, () => {
+  console.log(`🚀 Serveur démarré sur ${HOST}:${PORT}`);
   console.log(`📡 WebSocket prêt`);
   console.log(`🤖 IA: ${HF_TOKEN ? 'Activée' : 'Désactivée (HF_TOKEN non défini)'}`);
 });
