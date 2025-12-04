@@ -593,7 +593,8 @@ io.on("connection", (socket) => {
 });
 
 // ===== DÉMARRAGE =====
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT;
+if (!PORT) throw new Error("PORT not defined in environment");
 
 server.listen(PORT, () => {
   console.log(`🚀 Serveur: http://localhost:${PORT}`);
