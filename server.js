@@ -53,6 +53,9 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 const MAX_CHAT_HISTORY = 500;
 const MAX_OOC_HISTORY = 200;
 const DATA_PATH = path.join(__dirname, "data", "rp.json");
+// Server bindings (move early so startServer can access them)
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // ===== ÉTAT DU JEU EN MÉMOIRE =====
 let gameState = {
@@ -123,7 +126,7 @@ function saveGameData() {
   try {
     fs.writeFileSync(DATA_PATH, JSON.stringify(gameState.rpData, null, 2));
     // Mirror to DB asynchronously when configured
-    if (process.env.DATABASE_URL) {
+    if (process.env.MONGODB_URI) {
       saveGameDataToDB(gameState.rpData).then((ok) => {
         if (ok) console.log('💾 Données miroir sauvegardées en DB');
       }).catch((err) => {
@@ -242,7 +245,7 @@ function advanceToNextTurn() {
 async function startServer() {
   console.log('🔄 Loading game data...');
   let loadedFromDb = false;
-  if (process.env.DATABASE_URL) {
+  if (process.env.MONGODB_URI) {
     try {
       await initDb();
       loadedFromDb = await loadFromDBIfAvailable();
@@ -717,25 +720,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// ===== DÉMARRAGE =====
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
-
-if (!process.env.PORT) {
-  console.warn('⚠️ PORT not defined in environment; defaulting to 3000 (development only)');
-}
-
-console.log(`🕒 Démarrage: ${new Date().toISOString()}`);
-console.log(`🌍 Environment: NODE_ENV=${process.env.NODE_ENV || 'development'}`);
-console.log(`💾 Data file: ${DATA_PATH}`);
-console.log(`🔗 Listening on ${HOST}:${PORT}...`);
-
-server.listen(PORT, HOST, () => {
-  console.log(`🚀 Serveur ACTIVE sur ${HOST}:${PORT}`);
-  console.log(`📡 WebSocket prêt`);
-  console.log(`🤖 IA: ${HF_TOKEN ? 'Activée' : 'Désactivée (HF_TOKEN non défini)'}`);
-  console.log(`✅ Ready to accept connections`);
-});
+// Startup is handled by `startServer()` above which calls `server.listen()`.
 
 server.on('error', (err) => {
   console.error('❌ Server error:', err);
