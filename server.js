@@ -839,6 +839,18 @@ io.on("connection", (socket) => {
     io.emit("playersUpdated", rp.players);
   });
 
+  socket.on("deletePlayer", (playerIndex) => {
+    const rp = getCurrentRP();
+    if (!rp || !rp.players || playerIndex < 0 || playerIndex >= rp.players.length) return;
+
+    const deletedPlayer = rp.players[playerIndex];
+    rp.players.splice(playerIndex, 1);
+    saveGameData(); // Persist deletion to file and DB
+
+    io.emit("playerDeleted", { playerIndex, playerName: deletedPlayer.name });
+    io.emit("playersUpdated", rp.players);
+  });
+
   socket.on("updateRPTime", (newTime) => {
     gameState.rpTime = newTime;
     io.emit("rpTimeUpdated", newTime);

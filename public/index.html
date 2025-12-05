@@ -1532,8 +1532,13 @@ function randomRange(min, max) {
 
 function deleteCard(i) {
   if (confirm("Supprimer cette fiche ?")) {
+    // Emit to server via socket to delete player and save to DB
+    socket.emit('deletePlayer', i);
+    
+    // Immediately remove from local state
     currentRP.players.splice(i, 1);
     showPlayers(currentRP);
+    updateCharacterSelect();
   }
 }
 
