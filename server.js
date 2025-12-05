@@ -376,6 +376,13 @@ startServer().catch(err => {
   process.exit(1);
 });
 
+// Auto-save all game state to file + DB every 60 seconds
+setInterval(() => {
+  const now = new Date().toISOString();
+  console.log(`⏰ Auto-save triggered (${now})`);
+  saveGameData();
+}, 60000);
+
 // ===== ROUTES API (AVANT express.static) =====
 app.get("/health", (req, res) => {
   console.log('📍 Health check ping');
@@ -811,6 +818,25 @@ io.on("connection", (socket) => {
       saveGameData();
       io.emit("playerUpdated", { playerIndex, player: rp.players[playerIndex] });
     }
+  });
+
+  socket.on("addPlayer", (playerData) => {
+    const rp = getCurrentRP();
+    if (!rp) return;
+    if (!rp.players) rp.players = [];
+
+    // Ensure player has required fields
+    const newPlayer = playerData || {};
+    newPlayer.id = newPlayer.id || Date.now();
+    newPlayer.name = newPlayer.name || 'Nouveau joueur';
+    newPlayer.species = newPlayer.species || 'Humain';
+    newPlayer.location = newPlayer.location || 'Karakura Town';
+
+    rp.players.push(newPlayer);
+    saveGameData(); // Persist new player to file and DB
+
+    io.emit("playerAdded", { playerIndex: rp.players.length - 1, player: newPlayer });
+    io.emit("playersUpdated", rp.players);
   });
 
   socket.on("updateRPTime", (newTime) => {
