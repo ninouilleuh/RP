@@ -178,24 +178,53 @@ let mongoClient = null;
 let mongoDb = null;
 const MONGODB_DB = process.env.MONGODB_DB || null;
 const MONGODB_COLLECTION = process.env.MONGODB_COLLECTION || 'RPData';
+// Accept multiple common env var names for the URI
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGODB_URL || process.env.MONGO_URI || process.env.MONGO_URL || null;
 async function initDb() {
-  const uri = process.env.MONGODB_URI;
+  const uri = MONGO_URI;
   if (!uri) return;
   if (mongoClient) return;
-  mongoClient = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+  const baseOptions = { useNewUrlParser: true, useUnifiedTopology: true, serverSelectionTimeoutMS: 10000 };
+
+  // First try: normal secure connection
+  mongoClient = new MongoClient(uri, baseOptions);
   try {
     await mongoClient.connect();
-    // Use explicit DB name if provided, otherwise use the one from the URI
     mongoDb = MONGODB_DB ? mongoClient.db(MONGODB_DB) : mongoClient.db();
-    // Ensure collection index
     await mongoDb.collection(MONGODB_COLLECTION).createIndex({ _id: 1 }, { unique: true });
     console.log('✅ MongoDB connected to', mongoDb.databaseName, 'collection:', MONGODB_COLLECTION);
+    return;
   } catch (err) {
-    console.error('❌ MongoDB connection failed:', err.message || err);
-    // Clean up client on failure
+    console.error('❌ MongoDB secure connection failed:', err.message || err);
+    // clean up client
     try { await mongoClient.close(); } catch (e) {}
     mongoClient = null;
     mongoDb = null;
+
+    // If the failure looks like a TLS/SSL issue, try an insecure fallback for testing.
+    const msg = String(err.message || '').toLowerCase();
+    if (msg.includes('tls') || msg.includes('ssl') || msg.includes('tlsv1') || msg.includes('certificate')) {
+      console.warn('⚠️ TLS/SSL error detected. Attempting temporary insecure connection (tlsAllowInvalidCertificates). Only use for testing.');
+      const insecureOptions = Object.assign({}, baseOptions, { tls: true, tlsAllowInvalidCertificates: true, serverSelectionTimeoutMS: 8000 });
+      try {
+        mongoClient = new MongoClient(uri, insecureOptions);
+        await mongoClient.connect();
+        mongoDb = MONGODB_DB ? mongoClient.db(MONGODB_DB) : mongoClient.db();
+        await mongoDb.collection(MONGODB_COLLECTION).createIndex({ _id: 1 }, { unique: true });
+        console.log('✅ MongoDB connected (insecure fallback) to', mongoDb.databaseName, 'collection:', MONGODB_COLLECTION);
+        console.warn('⚠️ Connected using insecure TLS settings. Remove insecure fallback in production and fix certificate/URI.');
+        return;
+      } catch (err2) {
+        console.error('❌ Insecure MongoDB connection also failed:', err2.message || err2);
+        try { await mongoClient.close(); } catch (e) {}
+        mongoClient = null;
+        mongoDb = null;
+        throw err2;
+      }
+    }
+
+    // Not a TLS error or fallback failed: rethrow original
     throw err;
   }
 }
