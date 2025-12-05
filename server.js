@@ -400,17 +400,31 @@ app.get("/data/rp.json", (req, res) => {
 // Sauvegarde
 app.post("/save", (req, res) => {
   try {
-    // Support two formats: full state ({ rpData, chat, ... }) or legacy rpData-only
     const body = req.body || {};
+
     if (body.rpData) {
-      gameState.rpData = body.rpData;
-      gameState.chat = body.chat || gameState.chat;
-      gameState.oocChat = body.oocChat || gameState.oocChat;
-      gameState.turnSystem = body.turnSystem || gameState.turnSystem;
-      gameState.rpTime = body.rpTime || gameState.rpTime;
+      // Deep merge but protect bestiaire
+      function merge(target, source) {
+        for (const key in source) {
+          if (key === "bestiaire") continue; // 🔒 block overwrite
+
+          if (
+            typeof source[key] === "object" &&
+            source[key] !== null &&
+            !Array.isArray(source[key])
+          ) {
+            if (!target[key]) target[key] = {};
+            merge(target[key], source[key]);
+          } else {
+            target[key] = source[key];
+          }
+        }
+      }
+
+      merge(gameState.rpData, body.rpData);
     } else {
-      // assume body is rpData itself
-      gameState.rpData = body;
+      // old format fallback
+      merge(gameState.rpData, body);
     }
 
     if (saveGameData()) {
@@ -843,6 +857,20 @@ io.on("connection", (socket) => {
 
     io.emit("playerDeleted", { playerIndex, playerName: deletedPlayer.name });
     io.emit("playersUpdated", rp.players);
+  });
+
+  // Update NPC info in bestiaire
+  socket.on('updateNPC', (data) => {
+    // data: { factionName, index, npc }
+    const { factionName, index, npc } = data || {};
+    const rp = getCurrentRP();
+    if (!rp || !rp.bestiaire || !rp.bestiaire[factionName]) return;
+    if (index < 0 || index >= rp.bestiaire[factionName].length) return;
+
+    rp.bestiaire[factionName][index] = npc;
+    saveGameData();
+    io.emit('npcUpdated', { factionName, index, npc });
+    io.emit('bestiaireUpdated', rp.bestiaire);
   });
 
   socket.on("updateRPTime", (newTime) => {

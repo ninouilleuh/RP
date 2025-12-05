@@ -18,7 +18,6 @@
       <button class="time-btn" onclick="openTimeControl()" title="Gérer le temps">⏱️</button>
     </div>
     <div id="connectionStatus" class="status-disconnected">🔴 Déconnecté</div>
-    <div id="playerNotification" class="player-notification"></div>
   </div>
   <div>
     <button onclick="openNew()">+ Nouvelle fiche</button>
@@ -531,15 +530,6 @@ function initSocket() {
       updateCharacterSelect();
     }
   });
-
-  // === JOUEUR AJOUTÉ ===
-  socket.on("playerAdded", (data) => {
-    if (currentRP?.players) {
-      // Player already added by server, just refresh display
-      showPlayers(currentRP);
-      updateCharacterSelect();
-    }
-  });
   
   // === DONNÉES MISES À JOUR ===
   socket.on("dataUpdated", (newData) => {
@@ -552,16 +542,6 @@ function initSocket() {
   // === JOUEURS CONNECTÉS ===
   socket.on("playersUpdated", (players) => {
     updateConnectedPlayers(players);
-  });
-
-  // === JOUEUR REJOINT (transient notification) ===
-  socket.on("playerJoined", (data) => {
-    showPlayerNotification(`🟢 ${data.visitorName} a rejoint la partie`, 'join');
-  });
-
-  // === JOUEUR PARTI (transient notification) ===
-  socket.on("playerLeft", (data) => {
-    showPlayerNotification(`🔴 ${data.visitorName} a quitté la partie`, 'leave');
   });
   
   // === CHAT VIDÉ ===
@@ -660,20 +640,6 @@ function updateConnectionStatus(connected) {
       : '🔴 Déconnecté';
     status.className = connected ? 'status-connected' : 'status-disconnected';
   }
-}
-
-function showPlayerNotification(message, type) {
-  const notifDiv = document.getElementById("playerNotification");
-  if (!notifDiv) return;
-  
-  notifDiv.textContent = message;
-  notifDiv.className = `player-notification player-notification-${type}`;
-  notifDiv.style.display = 'block';
-  
-  // Auto-hide after 4 seconds
-  setTimeout(() => {
-    notifDiv.style.display = 'none';
-  }, 4000);
 }
 
 function updateConnectedPlayers(players) {
@@ -1435,16 +1401,11 @@ function saveNew() {
     return;
   }
   
-  // Emit to server via socket to add player and save to DB
-  socket.emit('addPlayer', n);
-  
-  // Immediately add to local state and refresh UI
   if (!currentRP.players) currentRP.players = [];
   currentRP.players.push(n);
   
   closeNew();
   showPlayers(currentRP);
-  updateCharacterSelect();
   
   appendMsg('system', `✨ ${n.name} créé(e) ! Race: ${n.species}`);
   appendMsg('system', `📊 Stats: Reiatsu ${n.stats.Reiatsu}, Endurance ${n.stats.Endurance}, Hakuda ${n.stats.Hakuda}, Défense ${n.stats.Defense}, Hohō ${n.stats.Hoho}, Intellect ${n.stats.Intellect}`);
@@ -1557,13 +1518,8 @@ function randomRange(min, max) {
 
 function deleteCard(i) {
   if (confirm("Supprimer cette fiche ?")) {
-    // Emit to server via socket to delete player and save to DB
-    socket.emit('deletePlayer', i);
-    
-    // Immediately remove from local state
     currentRP.players.splice(i, 1);
     showPlayers(currentRP);
-    updateCharacterSelect();
   }
 }
 
@@ -1806,53 +1762,174 @@ function closeBestiaire() {
 function openDetail(factionName, index) {
   const faction = currentRP.bestiaire[factionName];
   if (!faction) return;
-  
-  const p = faction[index];
-  const detail = document.getElementById("detailContent");
-  if (!detail) return;
-  
-  let statsHTML = "";
-  if (p.stats) {
-    const values = Object.values(p.stats).filter(v => typeof v === 'number');
-    const maxStat = Math.max(...values, 1);
-    
-    statsHTML = `<div class="stats-grid" style="margin-top:15px;">
-      <div class="stats-header">
-        <span>Stats</span>
-        <span class="max-indicator">Max: ${maxStat}</span>
-      </div>
-      ${Object.entries(p.stats).map(([k, v]) => {
-        if (typeof v !== 'number') return `<div class="stat-item"><span class="stat-name">${k}</span><span>${v}</span></div>`;
-        const percent = (v / maxStat) * 100;
-        const color = getStatColor(percent);
-        return `
-        <div class="stat-item">
-          <span class="stat-name">${k}</span>
-          <div class="stat-bar">
-            <div class="stat-fill" style="width:${percent}%; background:${color}"></div>
-          </div>
-          <span class="stat-value">${v}</span>
+
+  const npc = faction[index];
+  currentDetailNPC = { factionName, index };
+
+  // Normalize missing fields
+  npc.hp ??= 100;
+  npc.maxHp ??= 100;
+  npc.reiatsu ??= 50;
+  npc.maxReiatsu ??= 50;
+  npc.stamina ??= 50;
+  npc.maxStamina ??= 50;
+  npc.level ??= 1;
+  npc.xp ??= 0;
+  npc.stats ??= { Reiatsu:5, Endurance:5, Hakuda:5, Defense:5, Hoho:5, Intellect:5 };
+  npc.status ??= [];
+  npc.inventory ??= [];
+  npc.languages ??= "-";
+  npc.skills ??= "-";
+  npc.traits ??= "-";
+  npc.goals ??= "-";
+  npc.past ??= "";
+
+  // Percentages for resource bars
+  const hpPercent = (npc.hp / npc.maxHp) * 100;
+  const reiatsuPercent = (npc.reiatsu / npc.maxReiatsu) * 100;
+  const staminaPercent = (npc.stamina / npc.maxStamina) * 100;
+
+  // ------- Stats Grid -------
+  const values = Object.values(npc.stats);
+  const maxStat = Math.max(...values, 1);
+
+  const statDescriptions = {
+    Reiatsu: { icon: '🔵', name:'Pression Spirituelle', desc:'Puissance spirituelle, techniques' },
+    Endurance:{ icon:'🟡', name:'Endurance', desc:'Résistance, attaques continues' },
+    Hakuda:{ icon:'👊', name:'Hakuda', desc:'Dégâts physiques directs' },
+    Defense:{ icon:'🛡️', name:'Défense', desc:'Réduction des dégâts' },
+    Hoho:{ icon:'💨', name:'Vitesse (Hohō)', desc:'Esquive, déplacement rapide' },
+    Intellect:{ icon:'🧠', name:'Intellect', desc:'Critiques, stratégie' }
+  };
+
+  const statsHTML = Object.entries(npc.stats).map(([k, v]) => {
+    const info = statDescriptions[k] || { icon:'❓', name:k, desc:'—' };
+    const percent = (v / maxStat) * 100;
+    const color = getStatColor(percent);
+    return `
+      <div class="stat-detail-item" title="${info.desc}">
+        <div class="stat-detail-header">
+          <span class="stat-detail-icon">${info.icon}</span>
+          <span class="stat-detail-name">${info.name}</span>
+          <span class="stat-detail-value">${v}</span>
         </div>
-      `;
-      }).join("")}
-    </div>`;
-  }
+        <div class="stat-bar">
+          <div class="stat-fill" style="width:${percent}%; background:${color}"></div>
+        </div>
+        <div class="stat-detail-desc">${info.desc}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Status tags
+  const statusHTML = npc.status.length
+    ? npc.status.map(s => `<span class="status-tag ${getStatusClass(s)}">${getStatusIcon(s)} ${s}</span>`).join('')
+    : '<span style="color:#666">Aucun statut</span>';
+
+  // Inventory count
+  const invCount = npc.inventory.length;
   
+  const detail = document.getElementById("detailContent");
   detail.innerHTML = `
-    <h3 style="color:#58a6ff;margin-top:0;">${p.name}</h3>
-    <p><b>Espèce :</b> ${p.species || "?"} | <b>Faction :</b> ${factionName}</p>
-    ${p.age ? `<p><b>Âge :</b> ${p.age}</p>` : ""}
-    <p><b>Rôle :</b> ${p.role || "–"}</p>
-    <p><b>Localisation actuelle :</b> ${p.location || "Inconnue"}</p>
-    ${p.appearance ? `<p><b>Apparence :</b><br>${p.appearance}</p>` : ""}
-    ${p.description ? `<p><b>Description :</b><br>${p.description}</p>` : ""}
-    ${p.techniques ? `<p><b>Techniques connues :</b><br>${p.techniques.join(", ")}</p>` : ""}
-    ${statsHTML}
-    ${p.hidden ? `<details><summary>🔒 Informations cachées</summary><p>${p.hidden}</p></details>` : ""}
+    <div class="player-detail-header">
+      <div class="player-avatar">${npc.name[0] || "?"}</div>
+
+      <div class="player-main-info">
+        <h3>${npc.name}</h3>
+        <p class="player-subtitle">${npc.species || "Inconnu"} • ${npc.age || "?"}</p>
+
+        <div class="player-level-xp">
+          <span class="badge badge-level">⭐ Niveau ${npc.level}</span>
+          <span class="badge badge-xp">✨ ${npc.xp}/100 XP</span>
+        </div>
+      </div>
+    </div>
+
+    ${npc.raceBonuses?.length ? `
+    <div class="race-bonuses">
+      ${npc.raceBonuses.map(b => `<div class="race-bonus">${b}</div>`).join("")}
+    </div>` : ""}
+
+    <div class="detail-section-player">
+      <h4>💪 Ressources</h4>
+
+      <div class="resource-detail">
+        <div class="resource-detail-header">
+          <span>❤️ Points de Vie (HP)</span>
+          <span>${npc.hp} / ${npc.maxHp}</span>
+        </div>
+        <div class="resource-bar-large hp-bar-bg">
+          <div class="resource-fill-large hp-fill-color" style="width:${hpPercent}%"></div>
+        </div>
+      </div>
+
+      <div class="resource-detail">
+        <div class="resource-detail-header">
+          <span>🔵 Reiatsu (Énergie Spirituelle)</span>
+          <span>${npc.reiatsu} / ${npc.maxReiatsu}</span>
+        </div>
+        <div class="resource-bar-large reiatsu-bar-bg">
+          <div class="resource-fill-large reiatsu-fill-color" style="width:${reiatsuPercent}%"></div>
+        </div>
+      </div>
+
+      <div class="resource-detail">
+        <div class="resource-detail-header">
+          <span>🟡 Stamina</span>
+          <span>${npc.stamina} / ${npc.maxStamina}</span>
+        </div>
+        <div class="resource-bar-large stamina-bar-bg">
+          <div class="resource-fill-large stamina-fill-color" style="width:${staminaPercent}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section-player">
+      <h4>📊 Attributs & Statistiques</h4>
+      <div class="stats-detail-grid">${statsHTML}</div>
+    </div>
+
+    <div class="detail-section-player">
+      <h4>🏷️ Statuts</h4>
+      <div class="status-tags-detail">
+        ${statusHTML}
+      </div>
+    </div>
+
+    <div class="detail-section-player">
+      <h4>📍 Localisation</h4>
+      <div class="detail-row">
+        <span class="detail-label">Lieu actuel</span>
+        <span class="detail-value">${npc.location || "Inconnu"}</span>
+      </div>
+    </div>
+
+    <div class="detail-section-player">
+      <h4>📝 Informations générales</h4>
+      <div class="detail-row"><span class="detail-label">Langues</span><span class="detail-value">${npc.languages}</span></div>
+      <div class="detail-row"><span class="detail-label">Compétences</span><span class="detail-value">${npc.skills}</span></div>
+      <div class="detail-row"><span class="detail-label">Traits</span><span class="detail-value">${npc.traits}</span></div>
+      <div class="detail-row"><span class="detail-label">Objectifs</span><span class="detail-value">${npc.goals}</span></div>
+    </div>
+
+    ${npc.past ? `
+    <div class="detail-section-player">
+      <h4>📖 Background</h4>
+      <p>${npc.past}</p>
+    </div>` : ""}
+
+    <div class="detail-section-player">
+      <h4>⚔️ Techniques</h4>
+      <p>${npc.techniques?.join(", ") || "Aucune"}</p>
+    </div>
+
+    <div class="detail-section-player">
+      <h4>🎒 Inventaire</h4>
+      <p>${invCount} objet(s)</p>
+    </div>
   `;
-  
-  const modal = document.getElementById("detailModal");
-  if (modal) modal.style.display = "flex";
+
+  document.getElementById("detailModal").style.display = "flex";
 }
 
 function closeDetail() {
