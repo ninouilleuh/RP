@@ -530,6 +530,15 @@ function initSocket() {
       updateCharacterSelect();
     }
   });
+
+  // === JOUEUR AJOUTÉ ===
+  socket.on("playerAdded", (data) => {
+    if (currentRP?.players) {
+      // Player already added by server, just refresh display
+      showPlayers(currentRP);
+      updateCharacterSelect();
+    }
+  });
   
   // === DONNÉES MISES À JOUR ===
   socket.on("dataUpdated", (newData) => {
@@ -1404,8 +1413,13 @@ function saveNew() {
   // Emit to server via socket to add player and save to DB
   socket.emit('addPlayer', n);
   
+  // Immediately add to local state and refresh UI
+  if (!currentRP.players) currentRP.players = [];
+  currentRP.players.push(n);
+  
   closeNew();
   showPlayers(currentRP);
+  updateCharacterSelect();
   
   appendMsg('system', `✨ ${n.name} créé(e) ! Race: ${n.species}`);
   appendMsg('system', `📊 Stats: Reiatsu ${n.stats.Reiatsu}, Endurance ${n.stats.Endurance}, Hakuda ${n.stats.Hakuda}, Défense ${n.stats.Defense}, Hohō ${n.stats.Hoho}, Intellect ${n.stats.Intellect}`);
