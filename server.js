@@ -5,6 +5,7 @@ const { Server } = require("socket.io");
 const fs = require("fs");
 const cors = require("cors");
 const path = require("path");
+const { MongoClient } = require('mongodb');
 
 const app = express();
 const server = http.createServer(app);
@@ -121,9 +122,68 @@ function createDefaultData() {
 function saveGameData() {
   try {
     fs.writeFileSync(DATA_PATH, JSON.stringify(gameState.rpData, null, 2));
+    // Mirror to DB asynchronously when configured
+    if (process.env.DATABASE_URL) {
+      saveGameDataToDB(gameState.rpData).then((ok) => {
+        if (ok) console.log('💾 Données miroir sauvegardées en DB');
+      }).catch((err) => {
+        console.error('❌ Erreur miroir DB:', err);
+      });
+    }
     return true;
   } catch (err) {
     console.error("❌ Erreur sauvegarde:", err);
+    return false;
+  }
+}
+
+// Optional: MongoDB mirror (async). If `MONGODB_URI` is set, the server will
+// store `rpData` in a collection named `rp_store` with a single document
+// having `_id: 'rpData'` and `data: {...}`. This mirrors filesystem saves to
+// a persistent database (useful on PaaS like Render where local disk is ephemeral).
+let mongoClient = null;
+let mongoDb = null;
+async function initDb() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) return;
+  if (mongoClient) return;
+  mongoClient = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+  await mongoClient.connect();
+  // Use the database specified in the URI; if none, default will be used by driver
+  mongoDb = mongoClient.db();
+  await mongoDb.collection('rp_store').createIndex({ _id: 1 }, { unique: true });
+}
+
+async function saveGameDataToDB(data) {
+  try {
+    if (!process.env.MONGODB_URI) return false;
+    if (!mongoClient) await initDb();
+    await mongoDb.collection('rp_store').updateOne(
+      { _id: 'rpData' },
+      { $set: { data: data } },
+      { upsert: true }
+    );
+    return true;
+  } catch (err) {
+    console.error('❌ Erreur sauvegarde DB:', err.message || err);
+    return false;
+  }
+}
+
+async function loadFromDBIfAvailable() {
+  try {
+    if (!process.env.MONGODB_URI) return false;
+    if (!mongoClient) await initDb();
+    const doc = await mongoDb.collection('rp_store').findOne({ _id: 'rpData' });
+    if (doc && doc.data) {
+      gameState.rpData = doc.data;
+      gameState.currentRP = Object.keys(gameState.rpData)[0];
+      console.log('✅ Données RP chargées depuis MongoDB');
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('❌ Erreur lecture DB:', err.message || err);
     return false;
   }
 }
@@ -179,9 +239,41 @@ function advanceToNextTurn() {
 }
 
 // ===== CHARGER LES DONNÉES =====
-console.log('🔄 Loading game data...');
-loadGameData();
-console.log('✅ Game data loaded successfully');
+async function startServer() {
+  console.log('🔄 Loading game data...');
+  let loadedFromDb = false;
+  if (process.env.DATABASE_URL) {
+    try {
+      await initDb();
+      loadedFromDb = await loadFromDBIfAvailable();
+    } catch (err) {
+      console.error('❌ DB init/lecture échouée:', err);
+    }
+  }
+
+  if (!loadedFromDb) {
+    loadGameData();
+  }
+
+  console.log('✅ Game data loaded successfully');
+
+  console.log(`🕒 Démarrage: ${new Date().toISOString()}`);
+  console.log(`🌍 Environment: NODE_ENV=${process.env.NODE_ENV || 'development'}`);
+  console.log(`💾 Data file: ${DATA_PATH}`);
+  console.log(`🔗 Listening on ${HOST}:${PORT}...`);
+
+  server.listen(PORT, HOST, () => {
+    console.log(`🚀 Serveur ACTIVE sur ${HOST}:${PORT}`);
+    console.log(`📡 WebSocket prêt`);
+    console.log(`🤖 IA: ${HF_TOKEN ? 'Activée' : 'Désactivée (HF_TOKEN non défini)'}`);
+    console.log(`✅ Ready to accept connections`);
+  });
+}
+
+startServer().catch(err => {
+  console.error('❌ Failed to start server:', err);
+  process.exit(1);
+});
 
 // ===== ROUTES API (AVANT express.static) =====
 app.get("/health", (req, res) => {
