@@ -476,7 +476,7 @@ Contexte actuel: ${context}`;
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessage }
           ],
-          max_tokens: 500,
+          max_tokens: 30000,
           temperature: 0.8
         }),
       }
