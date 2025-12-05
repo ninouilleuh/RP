@@ -192,7 +192,7 @@ async function initDb() {
   try {
     await mongoClient.connect();
     mongoDb = MONGODB_DB ? mongoClient.db(MONGODB_DB) : mongoClient.db();
-    await mongoDb.collection(MONGODB_COLLECTION).createIndex({ _id: 1 }, { unique: true });
+    // No need to create an index on `_id` - it's unique by default.
     console.log('✅ MongoDB connected to', mongoDb.databaseName, 'collection:', MONGODB_COLLECTION);
     return;
   } catch (err) {
@@ -211,7 +211,7 @@ async function initDb() {
         mongoClient = new MongoClient(uri, insecureOptions);
         await mongoClient.connect();
         mongoDb = MONGODB_DB ? mongoClient.db(MONGODB_DB) : mongoClient.db();
-        await mongoDb.collection(MONGODB_COLLECTION).createIndex({ _id: 1 }, { unique: true });
+        // No need to create an index on `_id` - it's unique by default.
         console.log('✅ MongoDB connected (insecure fallback) to', mongoDb.databaseName, 'collection:', MONGODB_COLLECTION);
         console.warn('⚠️ Connected using insecure TLS settings. Remove insecure fallback in production and fix certificate/URI.');
         return;
