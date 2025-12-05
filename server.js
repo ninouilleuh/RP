@@ -176,22 +176,40 @@ function saveGameData() {
 // a persistent database (useful on PaaS like Render where local disk is ephemeral).
 let mongoClient = null;
 let mongoDb = null;
+const MONGODB_DB = process.env.MONGODB_DB || null;
+const MONGODB_COLLECTION = process.env.MONGODB_COLLECTION || 'RPData';
 async function initDb() {
   const uri = process.env.MONGODB_URI;
   if (!uri) return;
   if (mongoClient) return;
   mongoClient = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-  await mongoClient.connect();
-  // Use the database specified in the URI; if none, default will be used by driver
-  mongoDb = mongoClient.db();
-  await mongoDb.collection('rp_store').createIndex({ _id: 1 }, { unique: true });
+  try {
+    await mongoClient.connect();
+    // Use explicit DB name if provided, otherwise use the one from the URI
+    mongoDb = MONGODB_DB ? mongoClient.db(MONGODB_DB) : mongoClient.db();
+    // Ensure collection index
+    await mongoDb.collection(MONGODB_COLLECTION).createIndex({ _id: 1 }, { unique: true });
+    console.log('✅ MongoDB connected to', mongoDb.databaseName, 'collection:', MONGODB_COLLECTION);
+  } catch (err) {
+    console.error('❌ MongoDB connection failed:', err.message || err);
+    // Clean up client on failure
+    try { await mongoClient.close(); } catch (e) {}
+    mongoClient = null;
+    mongoDb = null;
+    throw err;
+  }
 }
 
 async function saveGameDataToDB(data) {
   try {
     if (!process.env.MONGODB_URI) return false;
     if (!mongoClient) await initDb();
-    await mongoDb.collection('rp_store').updateOne(
+    if (!mongoDb) {
+      console.error('❌ MongoDB not initialized, cannot save to DB');
+      return false;
+    }
+
+    await mongoDb.collection(MONGODB_COLLECTION).updateOne(
       { _id: 'rpData' },
       { $set: { data: data } },
       { upsert: true }
@@ -207,19 +225,28 @@ async function loadFromDBIfAvailable() {
   try {
     if (!process.env.MONGODB_URI) return false;
     if (!mongoClient) await initDb();
-    const doc = await mongoDb.collection('rp_store').findOne({ _id: 'rpData' });
-    if (doc && doc.data) {
-      const data = doc.data;
-      // DB stores full state (toSave)
-      if (data.rpData) {
-        gameState.rpData = data.rpData;
-        gameState.chat = data.chat || [];
-        gameState.oocChat = data.oocChat || [];
-        gameState.turnSystem = data.turnSystem || gameState.turnSystem;
-        gameState.rpTime = data.rpTime || gameState.rpTime;
+    if (!mongoDb) {
+      console.error('❌ MongoDB not initialized, cannot read DB');
+      return false;
+    }
+
+    let doc = await mongoDb.collection(MONGODB_COLLECTION).findOne({ _id: 'rpData' });
+    // fallback: if no document with _id 'rpData', try to read first doc in collection
+    if (!doc) {
+      doc = await mongoDb.collection(MONGODB_COLLECTION).findOne({});
+    }
+
+    if (doc) {
+      const payload = doc.data || doc; // support both shapes
+      if (payload.rpData) {
+        gameState.rpData = payload.rpData;
+        gameState.chat = payload.chat || [];
+        gameState.oocChat = payload.oocChat || [];
+        gameState.turnSystem = payload.turnSystem || gameState.turnSystem;
+        gameState.rpTime = payload.rpTime || gameState.rpTime;
       } else {
         // legacy: stored only rpData
-        gameState.rpData = data;
+        gameState.rpData = payload;
       }
 
       gameState.currentRP = Object.keys(gameState.rpData)[0];
