@@ -56,6 +56,8 @@ const DATA_PATH = path.join(__dirname, "data", "rp.json");
 // Server bindings (move early so startServer can access them)
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
+// Hugging Face token (read early so startup messages can reference it)
+const HF_TOKEN = process.env.HF_TOKEN;
 
 // ===== ÉTAT DU JEU EN MÉMOIRE =====
 let gameState = {
@@ -86,13 +88,34 @@ function loadGameData() {
     }
     
     if (fs.existsSync(DATA_PATH)) {
-      const data = fs.readFileSync(DATA_PATH, "utf8");
-      gameState.rpData = JSON.parse(data);
+      const raw = fs.readFileSync(DATA_PATH, "utf8");
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        console.error('❌ JSON parse error data file, recreating default:', e.message || e);
+      }
+
+      // Support legacy file that contained only rpData
+      if (data && data.rpData) {
+        gameState.rpData = data.rpData;
+        gameState.chat = data.chat || [];
+        gameState.oocChat = data.oocChat || [];
+        gameState.turnSystem = data.turnSystem || gameState.turnSystem;
+        gameState.rpTime = data.rpTime || gameState.rpTime;
+      } else if (data) {
+        // old format: file is rpData directly
+        gameState.rpData = data;
+      } else {
+        gameState.rpData = createDefaultData();
+      }
+
       gameState.currentRP = Object.keys(gameState.rpData)[0];
       console.log("✅ Données RP chargées:", Object.keys(gameState.rpData).length, "RP(s)");
     } else {
       gameState.rpData = createDefaultData();
       gameState.currentRP = Object.keys(gameState.rpData)[0];
+      // persist the initial full state
       saveGameData();
       console.log("✅ Données par défaut créées");
     }
@@ -124,10 +147,17 @@ function createDefaultData() {
 
 function saveGameData() {
   try {
-    fs.writeFileSync(DATA_PATH, JSON.stringify(gameState.rpData, null, 2));
+    const toSave = {
+      rpData: gameState.rpData,
+      chat: gameState.chat,
+      oocChat: gameState.oocChat,
+      turnSystem: gameState.turnSystem,
+      rpTime: gameState.rpTime
+    };
+    fs.writeFileSync(DATA_PATH, JSON.stringify(toSave, null, 2));
     // Mirror to DB asynchronously when configured
     if (process.env.MONGODB_URI) {
-      saveGameDataToDB(gameState.rpData).then((ok) => {
+      saveGameDataToDB(toSave).then((ok) => {
         if (ok) console.log('💾 Données miroir sauvegardées en DB');
       }).catch((err) => {
         console.error('❌ Erreur miroir DB:', err);
@@ -179,7 +209,19 @@ async function loadFromDBIfAvailable() {
     if (!mongoClient) await initDb();
     const doc = await mongoDb.collection('rp_store').findOne({ _id: 'rpData' });
     if (doc && doc.data) {
-      gameState.rpData = doc.data;
+      const data = doc.data;
+      // DB stores full state (toSave)
+      if (data.rpData) {
+        gameState.rpData = data.rpData;
+        gameState.chat = data.chat || [];
+        gameState.oocChat = data.oocChat || [];
+        gameState.turnSystem = data.turnSystem || gameState.turnSystem;
+        gameState.rpTime = data.rpTime || gameState.rpTime;
+      } else {
+        // legacy: stored only rpData
+        gameState.rpData = data;
+      }
+
       gameState.currentRP = Object.keys(gameState.rpData)[0];
       console.log('✅ Données RP chargées depuis MongoDB');
       return true;
@@ -295,9 +337,21 @@ app.get("/data/rp.json", (req, res) => {
 // Sauvegarde
 app.post("/save", (req, res) => {
   try {
-    gameState.rpData = req.body;
+    // Support two formats: full state ({ rpData, chat, ... }) or legacy rpData-only
+    const body = req.body || {};
+    if (body.rpData) {
+      gameState.rpData = body.rpData;
+      gameState.chat = body.chat || gameState.chat;
+      gameState.oocChat = body.oocChat || gameState.oocChat;
+      gameState.turnSystem = body.turnSystem || gameState.turnSystem;
+      gameState.rpTime = body.rpTime || gameState.rpTime;
+    } else {
+      // assume body is rpData itself
+      gameState.rpData = body;
+    }
+
     if (saveGameData()) {
-      io.emit("dataUpdated", gameState.rpData);
+      io.emit("dataUpdated", { rpData: gameState.rpData, chat: gameState.chat });
       res.json({ ok: true });
     } else {
       res.status(500).json({ ok: false, error: "Erreur d'écriture" });
@@ -308,8 +362,6 @@ app.post("/save", (req, res) => {
 });
 
 // ===== HUGGING FACE IA =====
-const HF_TOKEN = process.env.HF_TOKEN;
-
 async function getAIResponse(context, characterName, playerMessage) {
   if (!HF_TOKEN) {
     console.log("⚠️ HF_TOKEN non défini, IA désactivée");
@@ -474,6 +526,7 @@ io.on("connection", (socket) => {
       timestamp: new Date().toISOString()
     });
     io.emit("chatMessage", joinMsg);
+    saveGameData();
     io.emit("playersUpdated", gameState.connectedPlayers);
   });
 
@@ -520,6 +573,8 @@ io.on("connection", (socket) => {
     });
     
     io.emit("chatMessage", message);
+    // persist chat
+    saveGameData();
     
     if (type === 'joueur' && HF_TOKEN && characterIndex >= 0) {
       io.emit("aiTyping", true);
@@ -542,6 +597,8 @@ io.on("connection", (socket) => {
             timestamp: new Date().toISOString()
           });
           io.emit("chatMessage", aiMessage);
+          // persist AI reply as part of chat
+          saveGameData();
         }
       } catch (err) {
         console.error("❌ Erreur IA:", err);
@@ -566,6 +623,8 @@ io.on("connection", (socket) => {
     });
     
     io.emit("oocMessage", message);
+    // persist OOC
+    saveGameData();
   });
 
   socket.on("nextTurn", () => {
@@ -589,6 +648,8 @@ io.on("connection", (socket) => {
       turnSystem: gameState.turnSystem,
       currentPlayerName: result.currentPlayer?.name || 'Joueur inconnu'
     });
+    // persist turn change + rpTime
+    saveGameData();
   });
 
   socket.on("skipTurn", () => {
@@ -624,6 +685,8 @@ io.on("connection", (socket) => {
       turnSystem: gameState.turnSystem,
       currentPlayerName: result.currentPlayer?.name || 'Joueur inconnu'
     });
+    // persist turn change + rpTime
+    saveGameData();
   });
 
   socket.on("setTurn", (index) => {
@@ -636,6 +699,8 @@ io.on("connection", (socket) => {
       turnSystem: gameState.turnSystem,
       currentPlayerName: rp.players[index]?.name || 'Joueur inconnu'
     });
+    // persist selected turn
+    saveGameData();
   });
 
   socket.on("resetTurns", () => {
@@ -660,6 +725,8 @@ io.on("connection", (socket) => {
       turnSystem: gameState.turnSystem, 
       currentPlayerName: firstPlayer 
     });
+    // persist reset of turn system
+    saveGameData();
   });
 
   socket.on("toggleTurnSystem", () => {
@@ -675,6 +742,8 @@ io.on("connection", (socket) => {
     });
     io.emit("chatMessage", toggleMsg);
     io.emit("turnChanged", { turnSystem: gameState.turnSystem });
+    // persist toggle
+    saveGameData();
   });
 
   socket.on("updatePlayer", (data) => {
@@ -691,16 +760,20 @@ io.on("connection", (socket) => {
   socket.on("updateRPTime", (newTime) => {
     gameState.rpTime = newTime;
     io.emit("rpTimeUpdated", newTime);
+    // persist rpTime
+    saveGameData();
   });
 
   socket.on("clearChat", () => {
     gameState.chat = [];
     io.emit("chatCleared");
+    saveGameData();
   });
 
   socket.on("clearOOC", () => {
     gameState.oocChat = [];
     io.emit("oocCleared");
+    saveGameData();
   });
 
   socket.on("disconnect", () => {
