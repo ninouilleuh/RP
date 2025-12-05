@@ -582,14 +582,8 @@ io.on("connection", (socket) => {
       connectedPlayers: gameState.connectedPlayers
     });
     
-    const joinMsg = addChatMessage({
-      id: Date.now(),
-      type: 'system',
-      text: `🟢 ${visitorName} a rejoint la partie`,
-      timestamp: new Date().toISOString()
-    });
-    io.emit("chatMessage", joinMsg);
-    saveGameData();
+    // Emit player joined event (non-persistent, transient notification)
+    io.emit("playerJoined", { visitorName, characterIndex });
     io.emit("playersUpdated", gameState.connectedPlayers);
   });
 
@@ -876,13 +870,8 @@ io.on("connection", (socket) => {
     
     gameState.connectedPlayers = gameState.connectedPlayers.filter(p => p.id !== socket.id);
     
-    const leaveMsg = addChatMessage({
-      id: Date.now(),
-      type: 'system',
-      text: `🔴 ${visitorName} a quitté la partie`,
-      timestamp: new Date().toISOString()
-    });
-    io.emit("chatMessage", leaveMsg);
+    // Emit player left event (non-persistent, transient notification)
+    io.emit("playerLeft", { visitorName });
     io.emit("playersUpdated", gameState.connectedPlayers);
   });
 });

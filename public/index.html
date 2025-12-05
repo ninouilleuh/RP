@@ -18,6 +18,7 @@
       <button class="time-btn" onclick="openTimeControl()" title="Gérer le temps">⏱️</button>
     </div>
     <div id="connectionStatus" class="status-disconnected">🔴 Déconnecté</div>
+    <div id="playerNotification" class="player-notification"></div>
   </div>
   <div>
     <button onclick="openNew()">+ Nouvelle fiche</button>
@@ -552,6 +553,16 @@ function initSocket() {
   socket.on("playersUpdated", (players) => {
     updateConnectedPlayers(players);
   });
+
+  // === JOUEUR REJOINT (transient notification) ===
+  socket.on("playerJoined", (data) => {
+    showPlayerNotification(`🟢 ${data.visitorName} a rejoint la partie`, 'join');
+  });
+
+  // === JOUEUR PARTI (transient notification) ===
+  socket.on("playerLeft", (data) => {
+    showPlayerNotification(`🔴 ${data.visitorName} a quitté la partie`, 'leave');
+  });
   
   // === CHAT VIDÉ ===
   socket.on("chatCleared", () => {
@@ -649,6 +660,20 @@ function updateConnectionStatus(connected) {
       : '🔴 Déconnecté';
     status.className = connected ? 'status-connected' : 'status-disconnected';
   }
+}
+
+function showPlayerNotification(message, type) {
+  const notifDiv = document.getElementById("playerNotification");
+  if (!notifDiv) return;
+  
+  notifDiv.textContent = message;
+  notifDiv.className = `player-notification player-notification-${type}`;
+  notifDiv.style.display = 'block';
+  
+  // Auto-hide after 4 seconds
+  setTimeout(() => {
+    notifDiv.style.display = 'none';
+  }, 4000);
 }
 
 function updateConnectedPlayers(players) {
