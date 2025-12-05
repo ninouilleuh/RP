@@ -1401,8 +1401,8 @@ function saveNew() {
     return;
   }
   
-  if (!currentRP.players) currentRP.players = [];
-  currentRP.players.push(n);
+  // Emit to server via socket to add player and save to DB
+  socket.emit('addPlayer', n);
   
   closeNew();
   showPlayers(currentRP);
