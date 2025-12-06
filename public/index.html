@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-
 <header>
   <div class="header-left">
     <h1>BLEACH RP – Fiches Joueurs</h1>
@@ -29,9 +28,6 @@
 <div id="sidebar">
   <button id="bestiaireBtn" onclick="openBestiaire()">📜 Bestiaire</button>
   <button id="mapBtn" onclick="openMap()">🗺️ Map</button>
-
-
-
 </div>
 
 <main id="container"></main>
@@ -519,18 +515,33 @@ function initSocket() {
   });
   
   // === TOUR CHANGÉ ===
-  socket.on("turnChanged", (data) => {
-    turnSystem = data.turnSystem;
-    updateTurnDisplay();
-    updateNPCAround();
-    updateMyCharacterInfo();
+socket.on("turnChanged", ({ turnSystem: newTurnSystem, currentPlayerName, currentEntity }) => {
+  // Mettre à jour le système de tour local
+  turnSystem = newTurnSystem;
+  
+  // Stocker l'entité courante pour l'affichage
+  turnSystem.currentEntityName = currentPlayerName || currentEntity?.name || 'Inconnu';
+  turnSystem.currentEntityType = currentEntity?.type || 'player';
+  
+  // Mettre à jour tous les affichages
+  updateTurnDisplay();
+  updateMyCharacterInfo();
+  updateCharacterSelect();
+  updateNPCAround();
+  
+  // Notification selon le type
+  if (currentEntity?.type === 'npc') {
+    appendSystemMsg(`🤖 C'est au tour de <strong>${currentEntity.name}</strong> (PNJ)`);
+  } else if (currentPlayerName) {
+    appendSystemMsg(`➡️ C'est au tour de <strong>${currentPlayerName}</strong>`);
     
-    if (myCharacterIndex >= 0 && turnSystem.currentTurn === myCharacterIndex) {
-      showNotification("🎮 C'est ton tour !");
-      const myInfo = document.getElementById('myCharacterInfo');
-      if (myInfo) myInfo.classList.add('my-turn');
+    // Notification si c'est MON tour
+    if (turnSystem.currentTurn === myCharacterIndex) {
+      showNotification(`🎮 C'est ton tour !`);
     }
-  });
+  }
+});
+
   
   // === JOUEUR MIS À JOUR ===
   socket.on("playerUpdated", (data) => {
@@ -574,6 +585,38 @@ function initSocket() {
 }
 
 // ===== UTILITAIRES =====
+function generateTurnOrder() {
+  const players = currentRP.players || [];
+  const bestiaire = currentRP.bestiaire || {};
+
+  const location = players[myCharacterIndex]?.location?.toLowerCase() || "";
+
+  let nearbyNPCs = [];
+
+  for (const [faction, npcs] of Object.entries(bestiaire)) {
+    npcs.forEach(n => {
+      if ((n.location || "").toLowerCase() === location) {
+        nearbyNPCs.push({
+          ...n,
+          faction,
+          type: "npc"
+        });
+      }
+    });
+  }
+
+  let list = [
+    ...players.map((p, index) => ({
+      name: p.name,
+      index,
+      type: "player",
+      location: p.location
+    })),
+    ...nearbyNPCs
+  ];
+
+  return list;
+}
 
 function formatTime(timestamp) {
   if (!timestamp) return '';
@@ -763,7 +806,13 @@ function updateMyCharacterInfo() {
   }
   
   const pj = currentRP.players[myCharacterIndex];
-  const isMyTurn = turnSystem.enabled && turnSystem.currentTurn === myCharacterIndex;
+  
+  // Vérifier si c'est mon tour en comparant le nom
+  const isMyTurn = turnSystem.enabled && 
+                   turnSystem.currentEntityType === 'player' &&
+                   turnSystem.currentEntityName === pj.name;
+  
+  const isNpcTurn = turnSystem.currentEntityType === 'npc';
   
   if (sendBtn) sendBtn.disabled = false;
   
@@ -773,13 +822,19 @@ function updateMyCharacterInfo() {
     
     if (chatInput) chatInput.placeholder = `C'est ton tour ! Que fait ${pj.name} ?`;
     if (controls) controls.classList.remove('not-your-turn');
+    
   } else if (turnSystem.enabled) {
-    const currentPlayer = currentRP.players[turnSystem.currentTurn];
-    info.innerHTML = `⏳ Tour de ${currentPlayer?.name || '?'} | ❤️ ${pj.hp}/${pj.maxHp} | 📍 ${pj.location || 'Inconnu'}`;
+    const currentName = turnSystem.currentEntityName || '?';
+    const turnInfo = isNpcTurn ? `🤖 Tour du PNJ: ${currentName}` : `⏳ Tour de ${currentName}`;
+    
+    info.innerHTML = `${turnInfo} | ❤️ ${pj.hp}/${pj.maxHp} | 📍 ${pj.location || 'Inconnu'}`;
     info.classList.remove('my-turn');
     
-    if (chatInput) chatInput.placeholder = `En attente... (tour de ${currentPlayer?.name || '?'})`;
+    if (chatInput) chatInput.placeholder = isNpcTurn 
+      ? `En attente du PNJ ${currentName}...`
+      : `En attente... (tour de ${currentName})`;
     if (controls) controls.classList.add('not-your-turn');
+    
   } else {
     info.innerHTML = `🆓 Mode libre | ❤️ ${pj.hp}/${pj.maxHp} | 📍 ${pj.location || 'Inconnu'}`;
     info.classList.remove('my-turn');
@@ -1009,22 +1064,41 @@ function updateTurnDisplay() {
   if (turnOrderEl) turnOrderEl.style.display = 'flex';
   
   const players = currentRP.players;
-  const currentPlayer = players[turnSystem.currentTurn];
+  
+  // Utiliser le nom stocké par le serveur (pas recalculer)
+  const currentName = turnSystem.currentEntityName || 'En attente...';
+  const isNpcTurn = turnSystem.currentEntityType === 'npc';
   
   const turnNumber = document.getElementById('turnNumber');
-  const currentPlayerName = document.getElementById('currentPlayerName');
+  const currentPlayerNameEl = document.getElementById('currentPlayerName');
   const turnToggleText = document.getElementById('turnToggleText');
   const orderDiv = document.getElementById('turnOrder');
   
   if (turnNumber) turnNumber.innerText = turnSystem.roundNumber;
-  if (currentPlayerName) currentPlayerName.innerText = currentPlayer?.name || '—';
+  
+  if (currentPlayerNameEl) {
+    if (isNpcTurn) {
+      currentPlayerNameEl.innerHTML = `🤖 ${currentName} <small>(PNJ)</small>`;
+    } else {
+      currentPlayerNameEl.innerText = currentName;
+    }
+  }
+  
   if (turnToggleText) turnToggleText.innerText = turnSystem.enabled ? 'Désactiver' : 'Activer';
   
+  // Afficher l'ordre des joueurs (seulement les PJ, pas les NPC)
   if (orderDiv) {
     orderDiv.innerHTML = players.map((p, i) => {
       let classes = 'turn-player';
-      if (i === turnSystem.currentTurn && turnSystem.enabled) classes += ' active';
-      if (turnSystem.playedThisRound.includes(i)) classes += ' played';
+      
+      // Vérifier si c'est le tour de CE joueur
+      // On compare par nom car l'index serveur inclut les NPC
+      const isCurrentTurn = turnSystem.enabled && 
+                            turnSystem.currentEntityType === 'player' && 
+                            turnSystem.currentEntityName === p.name;
+      
+      if (isCurrentTurn) classes += ' active';
+      if (turnSystem.playedThisRound?.includes(i)) classes += ' played';
       if (i === myCharacterIndex) classes += ' mine';
       
       return `
@@ -1035,11 +1109,21 @@ function updateTurnDisplay() {
         </div>
       `;
     }).join('');
+    
+    // Ajouter indicateur NPC si c'est leur tour
+    if (isNpcTurn) {
+      orderDiv.innerHTML += `
+        <div class="turn-player active npc-turn">
+          <span class="player-index">🤖</span>
+          ${currentName} (PNJ)
+        </div>
+      `;
+    }
   }
   
   updateMyCharacterInfo();
-  updateCharacterSelect();
 }
+
 
 function jumpToPlayer(index) {
   if (!turnSystem.enabled) return;
@@ -1068,30 +1152,7 @@ function toggleTurnSystem() {
   if (socket) socket.emit("toggleTurnSystem");
 }
 
-function nextTurn() {
-  if (!currentRP || !currentRP.players || currentRP.players.length === 0) return;
-  
-  const players = currentRP.players;
-  
-  if (!turnSystem.playedThisRound.includes(turnSystem.currentTurn)) {
-    turnSystem.playedThisRound.push(turnSystem.currentTurn);
-  }
-  
-  turnSystem.currentTurn = (turnSystem.currentTurn + 1) % players.length;
-  
-  if (turnSystem.currentTurn === 0) {
-    turnSystem.roundNumber++;
-    turnSystem.playedThisRound = [];
-    advanceTimeOnTurn(5);
-    rpTime.tour = turnSystem.roundNumber;
-    appendMsg('system', `═══════════ 🔄 TOUR ${turnSystem.roundNumber} ═══════════`);
-    checkSpecialEvents();
-  }
-  
-  updateTurnDisplay();
-  updateTimeDisplay();
-  updateNPCAround();
-}
+
 
 // ===== AFFICHAGE DES JOUEURS =====
 
@@ -3127,7 +3188,7 @@ function updateNPCAround() {
   const list = document.getElementById("npcAroundList");
   if (!panel || !list) return;
 
-  // Si aucun personnage incarné
+  // Vérifier si un personnage est incarné
   if (myCharacterIndex < 0 || !currentRP?.players?.[myCharacterIndex]) {
     panel.style.display = "none";
     return;
@@ -3151,7 +3212,7 @@ function updateNPCAround() {
     });
   });
 
-  // Si aucun NPC
+  // Si aucun NPC trouvé
   if (npcFound.length === 0) {
     panel.style.display = "none";
     return;
@@ -3160,14 +3221,27 @@ function updateNPCAround() {
   // Sinon, afficher
   panel.style.display = "block";
 
+  // HTML sécurisé pour ouvrir le détail par name
   list.innerHTML = npcFound.map(npc => `
-    <div class="npc-around-item" onclick="openDetail('${npc.factionName}', ${currentRP.bestiaire[npc.factionName].indexOf(npc)})">
+    <div class="npc-around-item" onclick="openDetailByName('${npc.factionName}', '${npc.name}')">
       <div class="npc-around-name">${npc.name}</div>
       <div class="npc-around-role">${npc.role || ""}</div>
       <div class="npc-around-species">${npc.species || ""}</div>
     </div>
   `).join("");
 }
+
+// Fonction sécurisée pour ouvrir un NPC par nom
+function openDetailByName(factionName, npcName) {
+  const npcs = currentRP.bestiaire?.[factionName] || [];
+  const index = npcs.findIndex(n => n.name === npcName);
+  if (index === -1) {
+    alert("NPC introuvable.");
+    return;
+  }
+  openDetail(factionName, index);
+}
+
 function openDetailFromChat(npcName) {
   const bestiaire = currentRP.bestiaire || {};
   for (const [factionName, list] of Object.entries(bestiaire)) {

@@ -3082,3 +3082,20 @@ button.confirm:hover{background:#0099ff;}
     max-width: 100%;
   }
 }
+
+
+.turn-player.npc-turn {
+  background: linear-gradient(135deg, #4a1a4a, #6a2a6a);
+  border-color: #9c27b0;
+  color: #ce93d8;
+}
+
+.turn-player.npc-turn.active {
+  box-shadow: 0 0 15px rgba(156, 39, 176, 0.5);
+  animation: npcPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes npcPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(156, 39, 176, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(156, 39, 176, 0.6); }
+}

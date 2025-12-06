@@ -80,6 +80,8 @@ let gameState = {
 
 // ===== FONCTIONS UTILITAIRES =====
 
+
+
 function loadGameData() {
   try {
     const dataDir = path.join(__dirname, "data");
@@ -311,33 +313,103 @@ function getCurrentRP() {
 
 function advanceToNextTurn() {
   const rp = getCurrentRP();
-  if (!rp?.players?.length) return null;
-  
-  if (!gameState.turnSystem.playedThisRound.includes(gameState.turnSystem.currentTurn)) {
-    gameState.turnSystem.playedThisRound.push(gameState.turnSystem.currentTurn);
-  }
-  
+  if (!rp || !rp.players || rp.players.length === 0) return null;
+
+  // Sauvegarder le joueur qui vient de jouer
+  const previousPlayerIndex = gameState.turnSystem.currentTurn;
+  const previousPlayer = rp.players[previousPlayerIndex];
+
+  // Avancer au joueur suivant (SEULEMENT les joueurs, pas les NPC)
   gameState.turnSystem.currentTurn = (gameState.turnSystem.currentTurn + 1) % rp.players.length;
-  
+
+  const currentPlayer = rp.players[gameState.turnSystem.currentTurn];
+
   let newRound = false;
-  
   if (gameState.turnSystem.currentTurn === 0) {
     gameState.turnSystem.roundNumber++;
     gameState.turnSystem.playedThisRound = [];
     newRound = true;
-    
+
+    // Avancer le temps RP
     const currentDate = new Date(gameState.rpTime.date);
     currentDate.setMinutes(currentDate.getMinutes() + 5);
     gameState.rpTime.date = currentDate.toISOString();
     gameState.rpTime.tour = gameState.turnSystem.roundNumber;
   }
-  
+
+  // Faire réagir les NPC proches du joueur qui vient de jouer
+  if (previousPlayer) {
+    triggerNearbyNPCs(previousPlayer);
+  }
+
   return {
     newRound,
-    currentPlayer: rp.players[gameState.turnSystem.currentTurn],
+    currentEntity: { ...currentPlayer, type: 'player' },
     roundNumber: gameState.turnSystem.roundNumber
   };
 }
+
+
+function triggerNearbyNPCs(player) {
+  const rp = getCurrentRP();
+  if (!rp) return;
+
+  const location = (player.location || "").toLowerCase();
+  const nearbyNPCs = [];
+
+  Object.entries(rp.bestiaire || {}).forEach(([faction, npcs]) => {
+    npcs.forEach(npc => {
+      if ((npc.location || "").toLowerCase() === location) {
+        nearbyNPCs.push({ ...npc, faction, type: 'npc' });
+      }
+    });
+  });
+
+  // Faire réagir chaque NPC avec un petit délai entre chacun
+  nearbyNPCs.forEach((npc, index) => {
+    setTimeout(() => {
+      npcReact(npc, player);
+    }, index * 800); // 0.8 seconde entre chaque NPC
+  });
+}
+
+
+function npcReact(npc, triggeringPlayer) {
+  if (!npc) return;
+
+  // Générer une réaction basée sur l'attitude du NPC
+  let reaction = '';
+  const attitude = (npc.attitude || 'neutral').toLowerCase();
+  const playerName = triggeringPlayer?.name || 'le joueur';
+
+  switch (attitude) {
+    case 'hostile':
+      reaction = `regarde ${playerName} avec hostilité, prêt à attaquer.`;
+      break;
+    case 'friendly':
+      reaction = `salue ${playerName} chaleureusement.`;
+      break;
+    case 'neutral':
+    default:
+      reaction = `observe ${playerName} silencieusement.`;
+      break;
+  }
+
+  const msg = {
+    id: Date.now(),
+    type: 'narrateur',
+    text: `🎭 **${npc.name}** ${reaction}`,
+    author: npc.name,
+    timestamp: new Date().toISOString()
+  };
+
+  gameState.chat.push(msg);
+  io.emit("chatMessage", msg);
+
+  // PAS de advanceToNextTurn() ici - le tour est déjà passé au joueur suivant
+  saveGameData();
+}
+
 
 // ===== CHARGER LES DONNÉES =====
 async function startServer() {
@@ -699,123 +771,140 @@ io.on("connection", (socket) => {
   });
 
   socket.on("nextTurn", () => {
-    if (!gameState.turnSystem.enabled) return;
-    
-    const result = advanceToNextTurn();
-    if (!result) return;
-    
-    if (result.newRound) {
-      const roundMsg = addChatMessage({
-        id: Date.now(),
-        type: 'system',
-        text: `═══════════ 🔄 TOUR ${result.roundNumber} ═══════════`,
-        timestamp: new Date().toISOString()
-      });
-      io.emit("chatMessage", roundMsg);
-      io.emit("rpTimeUpdated", gameState.rpTime);
-    }
-    
-    io.emit("turnChanged", {
-      turnSystem: gameState.turnSystem,
-      currentPlayerName: result.currentPlayer?.name || 'Joueur inconnu'
+  if (!gameState.turnSystem.enabled) return;
+  
+  const result = advanceToNextTurn();
+  if (!result) return;
+  
+  if (result.newRound) {
+    const roundMsg = addChatMessage({
+      id: Date.now(),
+      type: 'system',
+      text: `═══════════ 🔄 TOUR ${result.roundNumber} ═══════════`,
+      timestamp: new Date().toISOString()
     });
-    // persist turn change + rpTime
-    saveGameData();
+    io.emit("chatMessage", roundMsg);
+    io.emit("rpTimeUpdated", gameState.rpTime);
+  }
+  
+  io.emit("turnChanged", {
+    turnSystem: gameState.turnSystem,
+    currentPlayerName: result.currentEntity?.name || 'Inconnu',
+    currentEntity: result.currentEntity
   });
+
+  saveGameData();
+});
 
   socket.on("skipTurn", () => {
-    if (!gameState.turnSystem.enabled) return;
-    
-    const rp = getCurrentRP();
-    const currentCharacter = rp?.players?.[gameState.turnSystem.currentTurn];
-    const skipperName = currentCharacter?.name || socket.visitorName || 'Un joueur';
-    
-    const skipMsg = addChatMessage({
+  if (!gameState.turnSystem.enabled) return;
+  
+  const rp = getCurrentRP();
+  const currentPlayer = rp?.players?.[gameState.turnSystem.currentTurn];
+  const skipperName = currentPlayer?.name || socket.visitorName || 'Un joueur';
+  
+  const skipMsg = addChatMessage({
+    id: Date.now(),
+    type: 'system',
+    text: `⏭️ ${skipperName} passe son tour.`,
+    timestamp: new Date().toISOString()
+  });
+  io.emit("chatMessage", skipMsg);
+  
+  const result = advanceToNextTurn();
+  if (!result) return;
+  
+  if (result.newRound) {
+    const roundMsg = addChatMessage({
       id: Date.now(),
       type: 'system',
-      text: `⏭️ ${skipperName} passe son tour.`,
+      text: `═══════════ 🔄 TOUR ${result.roundNumber} ═══════════`,
       timestamp: new Date().toISOString()
     });
-    io.emit("chatMessage", skipMsg);
-    
-    const result = advanceToNextTurn();
-    if (!result) return;
-    
-    if (result.newRound) {
-      const roundMsg = addChatMessage({
-        id: Date.now(),
-        type: 'system',
-        text: `═══════════ 🔄 TOUR ${result.roundNumber} ═══════════`,
-        timestamp: new Date().toISOString()
-      });
-      io.emit("chatMessage", roundMsg);
-      io.emit("rpTimeUpdated", gameState.rpTime);
-    }
-    
-    io.emit("turnChanged", {
-      turnSystem: gameState.turnSystem,
-      currentPlayerName: result.currentPlayer?.name || 'Joueur inconnu'
-    });
-    // persist turn change + rpTime
-    saveGameData();
+    io.emit("chatMessage", roundMsg);
+    io.emit("rpTimeUpdated", gameState.rpTime);
+  }
+  
+  io.emit("turnChanged", {
+    turnSystem: gameState.turnSystem,
+    currentPlayerName: result.currentEntity?.name || 'Inconnu',
+    currentEntity: result.currentEntity
   });
+
+  saveGameData();
+});
 
   socket.on("setTurn", (index) => {
-    const rp = getCurrentRP();
-    if (!rp?.players?.[index]) return;
-    
-    gameState.turnSystem.currentTurn = index;
-    
-    io.emit("turnChanged", {
-      turnSystem: gameState.turnSystem,
-      currentPlayerName: rp.players[index]?.name || 'Joueur inconnu'
-    });
-    // persist selected turn
-    saveGameData();
+  const rp = getCurrentRP();
+  if (!rp?.players?.[index]) return;
+  
+  gameState.turnSystem.currentTurn = index;
+  const player = rp.players[index];
+  
+  io.emit("turnChanged", {
+    turnSystem: gameState.turnSystem,
+    currentPlayerName: player?.name || 'Joueur inconnu',
+    currentEntity: { ...player, type: 'player' }
   });
+  
+  saveGameData();
+});
+
 
   socket.on("resetTurns", () => {
-    gameState.turnSystem = {
-      enabled: true,
-      currentTurn: 0,
-      roundNumber: 1,
-      playedThisRound: []
-    };
-    
-    const rp = getCurrentRP();
-    const firstPlayer = rp?.players?.[0]?.name || 'Joueur 1';
-    
-    const resetMsg = addChatMessage({
-      id: Date.now(),
-      type: 'system',
-      text: `🔄 Tours réinitialisés. C'est au tour de ${firstPlayer}.`,
-      timestamp: new Date().toISOString()
-    });
-    io.emit("chatMessage", resetMsg);
-    io.emit("turnChanged", { 
-      turnSystem: gameState.turnSystem, 
-      currentPlayerName: firstPlayer 
-    });
-    // persist reset of turn system
-    saveGameData();
+  gameState.turnSystem = {
+    enabled: true,
+    currentTurn: 0,
+    roundNumber: 1,
+    playedThisRound: []
+  };
+  
+  const rp = getCurrentRP();
+  const firstPlayer = rp?.players?.[0];
+  const firstPlayerName = firstPlayer?.name || 'Joueur 1';
+  
+  const resetMsg = addChatMessage({
+    id: Date.now(),
+    type: 'system',
+    text: `🔄 Tours réinitialisés. C'est au tour de ${firstPlayerName}.`,
+    timestamp: new Date().toISOString()
   });
+  
+  io.emit("chatMessage", resetMsg);
+  io.emit("turnChanged", { 
+    turnSystem: gameState.turnSystem, 
+    currentPlayerName: firstPlayerName,
+    currentEntity: firstPlayer ? { ...firstPlayer, type: 'player' } : null
+  });
+  
+  saveGameData();
+});
+
 
   socket.on("toggleTurnSystem", () => {
-    gameState.turnSystem.enabled = !gameState.turnSystem.enabled;
-    
-    const toggleMsg = addChatMessage({
-      id: Date.now(),
-      type: 'system',
-      text: gameState.turnSystem.enabled 
-        ? '✅ Système de tour activé.'
-        : '❌ Système de tour désactivé (mode libre).',
-      timestamp: new Date().toISOString()
-    });
-    io.emit("chatMessage", toggleMsg);
-    io.emit("turnChanged", { turnSystem: gameState.turnSystem });
-    // persist toggle
-    saveGameData();
+  gameState.turnSystem.enabled = !gameState.turnSystem.enabled;
+  
+  const rp = getCurrentRP();
+  const currentPlayer = rp?.players?.[gameState.turnSystem.currentTurn];
+  
+  const toggleMsg = addChatMessage({
+    id: Date.now(),
+    type: 'system',
+    text: gameState.turnSystem.enabled 
+      ? '✅ Système de tour activé.'
+      : '❌ Système de tour désactivé (mode libre).',
+    timestamp: new Date().toISOString()
   });
+  
+  io.emit("chatMessage", toggleMsg);
+  io.emit("turnChanged", { 
+    turnSystem: gameState.turnSystem,
+    currentPlayerName: currentPlayer?.name || 'Inconnu',
+    currentEntity: currentPlayer ? { ...currentPlayer, type: 'player' } : null
+  });
+  
+  saveGameData();
+});
 
   socket.on("updatePlayer", (data) => {
     const { playerIndex, updates } = data;
