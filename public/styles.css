@@ -2968,3 +2968,117 @@ button.confirm:hover{background:#0099ff;}
   border-radius: 6px;
   padding: 8px 12px;
 }
+
+/* ============================================================
+   NPC AUTOUR DE TOI — same style as player detail sections
+   ============================================================ */
+
+#npcAroundPanel {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 20px auto;
+  max-width: 800px;
+  width: 90%;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+
+#npcAroundPanel h4 {
+  margin: 0 0 12px 0;
+  color: #ffcc66;
+  font-size: 1em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#npcAroundList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.npc-around-item {
+  background: #222;
+  border: 1px solid #333;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.npc-around-item:hover {
+  background: #2a2a2a;
+  border-color: #58a6ff;
+}
+
+.npc-around-name {
+  font-size: 1em;
+  font-weight: bold;
+  color: #58a6ff;
+}
+
+.npc-around-role {
+  color: #aaa;
+  font-size: 0.85em;
+}
+
+.npc-around-species {
+  color: #777;
+  font-size: 0.75em;
+}
+
+#chatSection {
+  display: flex;
+  flex-direction: column;
+}
+
+#npcAroundPanel {
+  order: -1; /* puts NPC panel above chat if inside chat section */
+  margin-bottom: 15px;
+}
+
+/* === CHAT & NPC LAYOUT (NPC à GAUCHE) === */
+#chatAndNPC {
+  display: flex;
+  flex-direction: row-reverse;  /* INVERSE L’ORDRE VISUEL */
+  align-items: flex-start;
+  gap: 20px;
+
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  margin-top: 20px;
+}
+
+/* CHAT à droite */
+#chatSection {
+  flex: 3;
+}
+
+/* NPC à gauche */
+#npcAroundPanel {
+  flex: 1.2;
+  max-width: 350px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  height: fit-content;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+
+/* Sur mobile : NPC repasse en dessous */
+@media (max-width: 900px) {
+  #chatAndNPC {
+    flex-direction: column;
+  }
+
+  #npcAroundPanel {
+    width: 100%;
+    max-width: 100%;
+  }
+}

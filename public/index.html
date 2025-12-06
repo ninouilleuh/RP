@@ -36,7 +36,12 @@
 
 <main id="container"></main>
 
+<div id="chatAndNPC">
 <!-- Section Tchat RP -->
+<div id="npcAroundPanel" class="detail-section-player" style="margin-top:15px; display:none;">
+  <h4>👥 NPC autour de toi</h4>
+  <div id="npcAroundList" style="color:#ccc;"></div>
+</div>
 <section id="chatSection">
   <h2 class="form-title">Salon RP</h2>
   
@@ -105,6 +110,8 @@
     <button onclick="clearOOC()">🗑️</button>
   </div>
 </section>
+
+</div>
 <!-- Modal Nouvelle Fiche -->
 <div class="modal" id="newModal">
   <div class="modal-content">
@@ -443,6 +450,7 @@ function initSocket() {
         showPlayers(currentRP);
         initTurnSystem();
         initRPTime();
+        updateNPCAround();
       };
     }
     
@@ -451,6 +459,7 @@ function initSocket() {
       showPlayers(currentRP);
       updateCharacterSelect();
       updateTurnDisplay();
+      updateNPCAround();
     }
     
     // Charger le chat RP
@@ -513,6 +522,7 @@ function initSocket() {
   socket.on("turnChanged", (data) => {
     turnSystem = data.turnSystem;
     updateTurnDisplay();
+    updateNPCAround();
     updateMyCharacterInfo();
     
     if (myCharacterIndex >= 0 && turnSystem.currentTurn === myCharacterIndex) {
@@ -725,6 +735,8 @@ function selectMyCharacter() {
   
   updateMyCharacterInfo();
   updateTurnDisplay();
+  updateNPCAround();
+  
   
   if (myCharacterIndex >= 0 && currentRP?.players?.[myCharacterIndex]) {
     const pj = currentRP.players[myCharacterIndex];
@@ -776,6 +788,7 @@ function updateMyCharacterInfo() {
     if (controls) controls.classList.remove('not-your-turn');
   }
 }
+
 
 // ===== SYSTÈME DE CHAT =====
 
@@ -979,6 +992,7 @@ function initTurnSystem() {
   turnSystem.playedThisRound = [];
   
   updateTurnDisplay();
+  updateNPCAround();
 }
 
 function updateTurnDisplay() {
@@ -1036,6 +1050,7 @@ function jumpToPlayer(index) {
     if (socket) socket.emit("setTurn", index);
     appendSystemMsg(`🎯 C'est maintenant au tour de ${player.name}.`);
     updateTurnDisplay();
+    updateNPCAround();
   }
 }
 
@@ -1075,6 +1090,7 @@ function nextTurn() {
   
   updateTurnDisplay();
   updateTimeDisplay();
+  updateNPCAround();
 }
 
 // ===== AFFICHAGE DES JOUEURS =====
@@ -1178,6 +1194,7 @@ function showPlayers(rp) {
   
   if (typeof updateTurnDisplay === 'function') {
     updateTurnDisplay();
+    updateNPCAround();
   }
 }
 
@@ -2069,6 +2086,7 @@ function travelTo(locationName) {
   renderLocations();
   showPlayers(currentRP);
   syncPlayerUpdate(currentTravelIndex);
+  updateNPCAround();
   
   appendMsg("narrateur", `📍 ${pj.name} se déplace de "${oldLocation}" vers "${locationName}".`);
 }
@@ -3104,6 +3122,64 @@ function renderLocationDetails(location) {
   `;
 }
 
+function updateNPCAround() {
+  const panel = document.getElementById("npcAroundPanel");
+  const list = document.getElementById("npcAroundList");
+  if (!panel || !list) return;
+
+  // Si aucun personnage incarné
+  if (myCharacterIndex < 0 || !currentRP?.players?.[myCharacterIndex]) {
+    panel.style.display = "none";
+    return;
+  }
+
+  const pj = currentRP.players[myCharacterIndex];
+  const location = (pj.location || "").toLowerCase();
+
+  let npcFound = [];
+
+  // Chercher dans le bestiaire
+  const bestiaire = currentRP.bestiaire || {};
+  Object.entries(bestiaire).forEach(([factionName, npcs]) => {
+    npcs.forEach(npc => {
+      if ((npc.location || "").toLowerCase() === location) {
+        npcFound.push({
+          ...npc,
+          factionName
+        });
+      }
+    });
+  });
+
+  // Si aucun NPC
+  if (npcFound.length === 0) {
+    panel.style.display = "none";
+    return;
+  }
+
+  // Sinon, afficher
+  panel.style.display = "block";
+
+  list.innerHTML = npcFound.map(npc => `
+    <div class="npc-around-item" onclick="openDetail('${npc.factionName}', ${currentRP.bestiaire[npc.factionName].indexOf(npc)})">
+      <div class="npc-around-name">${npc.name}</div>
+      <div class="npc-around-role">${npc.role || ""}</div>
+      <div class="npc-around-species">${npc.species || ""}</div>
+    </div>
+  `).join("");
+}
+function openDetailFromChat(npcName) {
+  const bestiaire = currentRP.bestiaire || {};
+  for (const [factionName, list] of Object.entries(bestiaire)) {
+    const index = list.findIndex(n => n.name === npcName);
+    if (index !== -1) {
+      openDetail(factionName, index);
+      return;
+    }
+  }
+  alert("NPC introuvable.");
+}
+
 function getWeatherIcon(type) {
   const icons = {
     sunny: '☀️', cloudy: '☁️', rainy: '🌧️', stormy: '⛈️',
@@ -3153,6 +3229,7 @@ function quickTravelTo(locationName) {
   renderLocationDetails(selectedLocation);
   showPlayers(currentRP);
   syncPlayerUpdate(index);
+  updateNPCAround();
   
   appendMsg("narrateur", `📍 ${player.name} se déplace de "${oldLocation}" vers "${locationName}".`);
   alert(`✅ ${player.name} est maintenant à ${locationName}!`);
@@ -3177,8 +3254,6 @@ async function saveData() {
     alert("❌ Erreur : " + e.message);
   }
 }
-
-// ===== FIN DU SCRIPT =====
 </script>
 </body>
 </html>
