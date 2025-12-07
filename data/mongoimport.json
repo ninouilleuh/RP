@@ -1,0 +1,1051 @@
+{
+  "_id": "rpData",
+  "data": {
+  "rpData": {
+    "rp1": {
+      "title": "RP1 – Karakura Night",
+      "players": [
+        {
+          "name": "AoiOFFLINE",
+          "age": "1",
+          "past": "hey",
+          "species": "Fullbringer",
+          "skills": "aa",
+          "languages": "anglais",
+          "traits": "a",
+          "goals": "a",
+          "inventory": [],
+          "level": 1,
+          "xp": 0,
+          "location": "Urahara Shop",
+          "hp": 70,
+          "maxHp": 70,
+          "reiatsu": 71,
+          "maxReiatsu": 71,
+          "stamina": 58,
+          "maxStamina": 58,
+          "status": [
+            "Drainé"
+          ],
+          "stats": {
+            "Reiatsu": 7,
+            "Endurance": 6,
+            "Hakuda": 7,
+            "Defense": 2,
+            "Hoho": 7,
+            "Intellect": 4
+          },
+          "raceBonuses": [
+            "✊ Fullbringer: Stats équilibrées, Polyvalent"
+          ]
+        },
+        {
+          "name": "shiori",
+          "age": "50",
+          "past": "KENPACHIER",
+          "species": "Shinigami",
+          "skills": "HACHE DE LA MORT",
+          "languages": "français",
+          "traits": "RENTRE DEDANS",
+          "goals": "TUER LES FANTOMAX",
+          "inventory": [],
+          "level": 1,
+          "xp": 0,
+          "location": "Karakura Town",
+          "hp": 95,
+          "maxHp": 95,
+          "reiatsu": 62,
+          "maxReiatsu": 62,
+          "stamina": 49,
+          "maxStamina": 49,
+          "status": [],
+          "stats": {
+            "Reiatsu": 4,
+            "Endurance": 3,
+            "Hakuda": 8,
+            "Defense": 5,
+            "Hoho": 4,
+            "Intellect": 2
+          },
+          "raceBonuses": [
+            "⚔️ Shinigami: +20 HP, +20 Reiatsu, Hakuda élevé"
+          ]
+        }
+      ],
+      "npcs": [
+        {
+          "name": "Kisuke Urahara",
+          "knownBy": [
+            "Aoi"
+          ],
+          "description": "Propriétaire du magasin Urahara Shop, parle rarement de son passé.",
+          "stats": {
+            "Reiatsu": "inconnu",
+            "Kidō": 90
+          }
+        },
+        {
+          "name": "Kuchiki Byakuya",
+          "knownBy": [
+            "Shiori"
+          ],
+          "description": "Capitaine de la 6ème division du gotei 13.",
+          "stats": {
+            "Reiatsu": "modéré",
+            "psychologie": "Traumatisé"
+          }
+        }
+      ],
+      "bestiaire": {
+        "Gotei13": [
+          {
+            "name": "Genryūsai Shigekuni Yamamoto",
+            "age": "Plus de 2000 ans",
+            "past": "Fondateur du Gotei 13, ancien chef d’une armée de véritables criminels militaires. A instauré l’ordre dans la Soul Society.",
+            "species": "Shinigami",
+            "skills": "Maîtrise absolue du Zanjutsu, Hakuda et Hoho. Expérience martiale inégalée.",
+            "languages": "japonais, anglais",
+            "traits": "Inflexible, discipliné, loyal, autoritaire, stratège",
+            "goals": "Protéger la Soul Society à tout prix",
+            "inventory": [
+              "Ryūjin Jakka"
+            ],
+            "level": 100,
+            "xp": 999999,
+            "location": "Seireitei - Première Division",
+            "hp": 350,
+            "maxHp": 350,
+            "reiatsu": 500,
+            "maxReiatsu": 500,
+            "stamina": 300,
+            "maxStamina": 300,
+            "status": [
+              "Calme",
+              "Alerte"
+            ],
+            "role": "Commandant-Capitaine du Gotei 13",
+            "knownBy": [
+              "Toute la Soul Society",
+              "Le Roi des Ames",
+              "Les Sternritter"
+            ],
+            "stats": {
+              "Reiatsu": 100,
+              "Endurance": 98,
+              "Hakuda": 95,
+              "Defense": 95,
+              "Hoho": 80,
+              "Intellect": 92
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, Hakuda élevé"
+            ],
+            "techniques": [
+              "Ryūjin Jakka",
+              "Zanka no Tachi",
+              "Jokaku Enjo",
+              "Ennetsu Jigoku"
+            ],
+            "description": "Fondateur et chef légendaire du Gotei 13, porteur du plus puissant Zanpakutō de type feu.",
+            "appearance": "Vieillard massif, crâne rasé, longue barbe blanche, cicatrices nombreuses.",
+            "hidden": "Son véritable passé guerrier, bien plus violent que ce que la Soul Society admet."
+          },
+          {
+            "name": "Soi Fon",
+            "age": "Environ 250 ans",
+            "past": "Née dans la famille Fēng, branche mineure du clan Shaolin. A gravi les rangs sous le commandement de Yoruichi, qu’elle considérait comme un modèle avant son départ.",
+            "species": "Shinigami",
+            "skills": "Maîtrise experte du Hakuda, Hoho et assassinat. Usage du poison et frappes létales.",
+            "languages": "japonais, chinois",
+            "traits": "Fière, disciplinée, loyale, perfectionniste, sensible quand il s’agit de Yoruichi",
+            "goals": "Protéger la Soul Society et prouver sa valeur",
+            "inventory": [
+              "Suzumebachi",
+              "Tenran Cloak"
+            ],
+            "level": 85,
+            "xp": 185000,
+            "location": "Seireitei - Deuxième Division",
+            "hp": 180,
+            "maxHp": 180,
+            "reiatsu": 220,
+            "maxReiatsu": 220,
+            "stamina": 260,
+            "maxStamina": 260,
+            "status": [
+              "Focalisée"
+            ],
+            "role": "Capitaine de la 2e Division — Commandante des Opérations Spéciales",
+            "knownBy": [
+              "Yoruichi Shihōin",
+              "Gotei 13",
+              "Omnitsukido"
+            ],
+            "stats": {
+              "Reiatsu": 78,
+              "Endurance": 70,
+              "Hakuda": 95,
+              "Defense": 72,
+              "Hoho": 98,
+              "Intellect": 82
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, Hakuda élevé"
+            ],
+            "techniques": [
+              "Suzumebachi - Nigeki Kessatsu",
+              "Shunkō",
+              "Suzu Shō - Bankai"
+            ],
+            "description": "Maîtresse de l’assassinat et du Hoho, figure emblématique de l’Omnitsukidō.",
+            "appearance": "Jeune femme mince, cheveux noirs courts, tenue d’opérations spéciales.",
+            "hidden": "Garde encore une profonde blessure liée au départ de Yoruichi."
+          },
+          {
+            "name": "Gin Ichimaru",
+            "age": "Environ 300 ans",
+            "past": "Ancien orphelin du Rukongai. A intégré la Soul Society avec l’objectif secret de se rapprocher d’Aizen pour venger Rangiku. A gravi les rangs grâce à ses talents hors norme.",
+            "species": "Shinigami",
+            "skills": "Zanjutsu précis, tromperie, manipulation, vitesse de frappe, perception aiguisée.",
+            "languages": "japonais, anglais",
+            "traits": "Sournois, calme, énigmatique, sarcastique, imprévisible",
+            "goals": "Tuer Aizen et protéger Rangiku — sans que personne ne comprenne ses intentions",
+            "inventory": [
+              "Shinso"
+            ],
+            "level": 90,
+            "xp": 220000,
+            "location": "Seireitei — Troisième Division",
+            "hp": 200,
+            "maxHp": 200,
+            "reiatsu": 240,
+            "maxReiatsu": 240,
+            "stamina": 180,
+            "maxStamina": 180,
+            "status": [
+              "Sourire perpétuel"
+            ],
+            "role": "Capitaine de la 3e Division",
+            "knownBy": [
+              "Rangiku Matsumoto",
+              "Aizen Sōsuke",
+              "Gotei 13"
+            ],
+            "stats": {
+              "Reiatsu": 82,
+              "Endurance": 75,
+              "Hakuda": 62,
+              "Defense": 70,
+              "Hoho": 85,
+              "Intellect": 95
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, bonus Hakuda"
+            ],
+            "techniques": [
+              "Shinso",
+              "Kamishini no Yari",
+              "Poison interne du Bankai",
+              "Attaques à allonge extrême"
+            ],
+            "description": "Capitaine mystérieux au sourire constant, connu pour ses propos ambigus et son sabre à portée démesurée.",
+            "appearance": "Homme élancé, cheveux argentés, yeux toujours plissés en un sourire inquiétant.",
+            "hidden": "Son Bankai n’est pas vraiment basé sur la vitesse, mais sur un poison létal microscopique."
+          },
+          {
+            "name": "Retsu Unohana",
+            "age": "Plusieurs siècles",
+            "past": "Ancienne guerrière redoutée — première à porter le titre de « Kenpachi » — devenue ensuite la bienveillante capitaine-guérisseuse de la 4ᵉ division.",
+            "species": "Shinigami",
+            "skills": "Médecine d’élite, Kido avancé, Zanjutsu exceptionnel, maîtrise du soin chirurgical et de la réanimation.",
+            "languages": "Langage de la Soul Society",
+            "traits": "Calme, maternelle en apparence, implacable et expérimentée au combat",
+            "goals": "Soigner et protéger la Soul Society ; transmettre son savoir",
+            "inventory": [
+              "Minazuki (zanpakutō)"
+            ],
+            "level": 95,
+            "xp": 420000,
+            "location": "Seireitei — 4ᵉ Division (Quartier médical)",
+            "hp": 260,
+            "maxHp": 260,
+            "reiatsu": 420,
+            "maxReiatsu": 420,
+            "stamina": 240,
+            "maxStamina": 240,
+            "status": [
+              "Sereine"
+            ],
+            "role": "Capitaine de la 4ᵉ Division — chef des services médicaux",
+            "knownBy": [
+              "Gotei 13",
+              "Capitaines et lieutenants",
+              "Patients soignés par la 4ᵉ Division"
+            ],
+            "stats": {
+              "Reiatsu": 92,
+              "Endurance": 88,
+              "Hakuda": 90,
+              "Defense": 85,
+              "Hoho": 78,
+              "Intellect": 94
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, compétence Kido améliorée"
+            ],
+            "techniques": [
+              "Shikai: Minazuki — propriétés curatives (forme liée au soin)",
+              "Bankai: capacités offensives et régénératives liées au sang",
+              "Kido médical avancé",
+              "Interventions chirurgicales spirituelles"
+            ],
+            "description": "Capitaine légendaire réputée pour être la meilleure guérisseuse de la Soul Society, cachant un passé de combattante impitoyable.",
+            "appearance": "Femme élancée aux longs cheveux noirs tressés, regard paisible, tenue de capitaine.",
+            "hidden": "Son ancienne identité de combattante sanguinaire et la profondeur réelle de sa puissance martiale."
+          },
+          {
+            "name": "Sōsuke Aizen",
+            "age": "Environ 300 ans",
+            "past": "Ancien lieutenant puis promu capitaine de la 5ᵉ division ; réputé pour son calme et son érudition au sein du Seireitei.",
+            "species": "Shinigami",
+            "skills": "Maîtrise du Kido, zanjutsu précis, stratégie et manipulation sociale, grande perception.",
+            "languages": "Langage de la Soul Society",
+            "traits": "Serein, charismatique, manipulateur discret, intellectuel",
+            "goals": "Apparent: maintenir l'ordre dans la Soul Society — Caché: objectifs personnels ambitieux.",
+            "inventory": [
+              "Kyōka Suigetsu (zanpakutō)"
+            ],
+            "level": 95,
+            "xp": 300000,
+            "location": "Seireitei — 5ᵉ Division (capitainerie)",
+            "hp": 230,
+            "maxHp": 230,
+            "reiatsu": 380,
+            "maxReiatsu": 380,
+            "stamina": 210,
+            "maxStamina": 210,
+            "status": [
+              "Calme",
+              "Affable en public"
+            ],
+            "role": "Capitaine de la 5ᵉ Division (ère épisode 1)",
+            "knownBy": [
+              "Rukia Kuchiki",
+              "Gin Ichimaru",
+              "Gotei 13"
+            ],
+            "stats": {
+              "Reiatsu": 90,
+              "Endurance": 80,
+              "Hakuda": 65,
+              "Defense": 78,
+              "Hoho": 82,
+              "Intellect": 99
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, affinité Kido"
+            ],
+            "techniques": [
+              "Shikai: Kyōka Suigetsu — manipulation des sens (hypnose)",
+              "Kido de haut niveau (offensif et défensif)",
+              "Tactiques et manœuvres stratégiques",
+              "Zanjutsu raffiné"
+            ],
+            "description": "Capitaine charismatique et respecté, perçu comme calme et protecteur — derrière l'image se cachent secrets et ambitions.",
+            "appearance": "Homme élégant, cheveux courts et bruns, regard posé, sourire tranquille.",
+            "hidden": "Véritable nature manipulatrice et projets clandestins — capacités réelles de Kyōka Suigetsu longtemps inconnues du public."
+          },
+          {
+            "name": "Byakuya Kuchiki",
+            "age": "Environ 200 ans",
+            "past": "Membre du noble clan Kuchiki. Devenu capitaine pour maintenir l’honneur et la discipline du clan et de la Soul Society. Protecteur du rang et des traditions.",
+            "species": "Shinigami",
+            "skills": "Maîtrise du Kido, Zanjutsu, Hoho exceptionnel, tactique et leadership. Expertise absolue avec son Zanpakutō, Senbonzakura.",
+            "languages": "Langage de la Soul Society",
+            "traits": "Froid, strict, fier, honorable, réfléchi",
+            "goals": "Maintenir l’ordre et l’honneur de la Soul Society et de son clan",
+            "inventory": [
+              "Senbonzakura",
+              "Accessoires de noble (kenseikan, bijoux de clan)"
+            ],
+            "level": 92,
+            "xp": 280000,
+            "location": "Seireitei — 6ᵉ Division",
+            "hp": 220,
+            "maxHp": 220,
+            "reiatsu": 400,
+            "maxReiatsu": 400,
+            "stamina": 200,
+            "maxStamina": 200,
+            "status": [
+              "Concentré",
+              "Impassible"
+            ],
+            "role": "Capitaine de la 6ᵉ Division",
+            "knownBy": [
+              "Rukia Kuchiki",
+              "Renji Abarai",
+              "Gotei 13"
+            ],
+            "stats": {
+              "Reiatsu": 88,
+              "Endurance": 85,
+              "Hakuda": 80,
+              "Defense": 83,
+              "Hoho": 95,
+              "Intellect": 90
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, bonus Hoho"
+            ],
+            "techniques": [
+              "Shikai: Senbonzakura — lame qui se disperse en milliers de pétales",
+              "Bankai: Senbonzakura Kageyoshi — contrôle massif de pétales tranchants",
+              "Kido de combat et défensif",
+              "Tactiques et stratégie de division"
+            ],
+            "description": "Capitaine noble et redoutable, maître du Senbonzakura, symbole de discipline et d’honneur.",
+            "appearance": "Homme aux longs cheveux noirs, attaches blanches de noble sur la tête, regard distant et impassible.",
+            "hidden": "Sa vraie sensibilité pour sa sœur Rukia et ses dilemmes moraux face à l’ordre et la justice."
+          },
+          {
+            "name": "Sajin Komamura",
+            "age": "Plus de 200 ans",
+            "past": "Membre d’un clan animal-humanoïde vivant caché du reste de la Soul Society. A longtemps dissimulé son visage par honte avant de rejoindre Yamamoto et devenir capitaine.",
+            "species": "Shinigami (race lupine humanoïde)",
+            "skills": "Zanjutsu puissant, défense robuste, endurance colossale, esprit loyal et stoïque.",
+            "languages": "Langage de la Soul Society",
+            "traits": "Loyal, humble, honorable, protecteur, patient",
+            "goals": "Servir la justice, protéger les siens et honorer le Gotei 13",
+            "inventory": [
+              "Tenken (zanpakutō)",
+              "Armure traditionnelle"
+            ],
+            "level": 88,
+            "xp": 230000,
+            "location": "Seireitei — 7ᵉ Division",
+            "hp": 300,
+            "maxHp": 300,
+            "reiatsu": 260,
+            "maxReiatsu": 260,
+            "stamina": 280,
+            "maxStamina": 280,
+            "status": [
+              "Calme",
+              "En alerte"
+            ],
+            "role": "Capitaine de la 7ᵉ Division",
+            "knownBy": [
+              "Kaname Tōsen",
+              "Yamamoto",
+              "Gotei 13"
+            ],
+            "stats": {
+              "Reiatsu": 75,
+              "Endurance": 98,
+              "Hakuda": 84,
+              "Defense": 95,
+              "Hoho": 60,
+              "Intellect": 78
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu",
+              "🐺 Race lupine: +30 Endurance, résistance physique accrue"
+            ],
+            "techniques": [
+              "Shikai: Tenken — Invocation d’un membre géant spirituel",
+              "Bankai: Kokujō Tengen Myō'ō — Guerrier colossal complet",
+              "Techniques de garde et protection",
+              "Force brute amplifiée"
+            ],
+            "description": "Capitaine imposant au cœur noble, symbole de loyauté et de droiture dans le Gotei 13.",
+            "appearance": "Grand homme-loup au pelage brun, armure lourde, posture droite et sereine.",
+            "hidden": "Souffrance ancienne liée au rejet de son clan par la Soul Society."
+          },
+          {
+            "name": "Shunsui Kyōraku",
+            "age": "Plus de 200 ans",
+            "past": "Né dans une famille noble. Élève de Yamamoto aux côtés d’Ukitake. A gravi naturellement les rangs grâce à son talent exceptionnel malgré sa personnalité décontractée.",
+            "species": "Shinigami",
+            "skills": "Zanjutsu avancé, immense Reiatsu, maîtrise du combat à deux lames, stratégie instinctive.",
+            "languages": "Langage de la Soul Society",
+            "traits": "Détendu, charmeur, malin, profondément bienveillant, très dangereux quand il devient sérieux",
+            "goals": "Maintenir la paix tout en évitant les conflits inutiles",
+            "inventory": [
+              "Katen Kyōkotsu (zanpakutō double)",
+              "Kimono rose",
+              "Chapeau de paille"
+            ],
+            "level": 96,
+            "xp": 350000,
+            "location": "Seireitei — 8ᵉ Division",
+            "hp": 240,
+            "maxHp": 240,
+            "reiatsu": 420,
+            "maxReiatsu": 420,
+            "stamina": 220,
+            "maxStamina": 220,
+            "status": [
+              "Relax",
+              "Souriant"
+            ],
+            "role": "Capitaine de la 8ᵉ Division",
+            "knownBy": [
+              "Jūshirō Ukitake",
+              "Yamamoto",
+              "Nanao Ise",
+              "Gotei 13"
+            ],
+            "stats": {
+              "Reiatsu": 95,
+              "Endurance": 82,
+              "Hakuda": 75,
+              "Defense": 88,
+              "Hoho": 80,
+              "Intellect": 94
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, bonus Zanjutsu"
+            ],
+            "techniques": [
+              "Shikai: Katen Kyōkotsu — jeux mortels matérialisés",
+              "Techniques basées sur les règles imposées à l'adversaire",
+              "Zanjutsu à deux sabres",
+              "Tactiques imprévisibles"
+            ],
+            "description": "Capitaine puissant à l'attitude détendue, dangereux stratège maîtrisant un zanpakutō aux règles complexes.",
+            "appearance": "Homme aux longs cheveux bruns, chapeau de paille et kimono rose fleuri, sourire amical.",
+            "hidden": "Sa puissance réelle est bien supérieure à ce qu’il laisse paraître."
+          },
+          {
+            "name": "Kaname Tōsen",
+            "age": "Plus de 200 ans",
+            "past": "Ancien citoyen du Rukongai ayant perdu une amie très proche, morte injustement. A juré de suivre la voie de la justice, ce qui l’a conduit à rejoindre la Soul Society. Proche de Komamura et secrètement allié d’Aizen.",
+            "species": "Shinigami",
+            "skills": "Maîtrise du Kido, capacité sensorielle extrême, Zanjutsu précis, Bankai spécialisé dans la privation des sens.",
+            "languages": "Langage de la Soul Society",
+            "traits": "Calme, idéaliste, droit en apparence, inflexible, mystérieux",
+            "goals": "Obtenir une justice absolue selon sa vision personnelle",
+            "inventory": [
+              "Suzumushi (zanpakutō)",
+              "Cape noire"
+            ],
+            "level": 90,
+            "xp": 260000,
+            "location": "Seireitei — 9ᵉ Division",
+            "hp": 210,
+            "maxHp": 210,
+            "reiatsu": 320,
+            "maxReiatsu": 320,
+            "stamina": 190,
+            "maxStamina": 190,
+            "status": [
+              "Froid",
+              "Réservé"
+            ],
+            "role": "Capitaine de la 9ᵉ Division",
+            "knownBy": [
+              "Sajin Komamura",
+              "Sōsuke Aizen",
+              "Gotei 13"
+            ],
+            "stats": {
+              "Reiatsu": 85,
+              "Endurance": 78,
+              "Hakuda": 70,
+              "Defense": 80,
+              "Hoho": 82,
+              "Intellect": 88
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, affinité Kido"
+            ],
+            "techniques": [
+              "Shikai: Suzumushi — vagues sonores, illusions auditives",
+              "Bankai: Suzumushi Tsuishiki — privation totale des sens de l'ennemi",
+              "Détection spirituelle avancée",
+              "Kido de neutralisation"
+            ],
+            "description": "Capitaine calme prônant la justice, mais suivant un chemin ambigu guidé par sa propre interprétation du bien.",
+            "appearance": "Homme aux cheveux sombres tressés, lunettes opaques, robe sombre, expression grave.",
+            "hidden": "Allégeance secrète à Aizen, motivée par une vision déformée mais sincère de la justice."
+          },
+          {
+            "name": "Tōshirō Hitsugaya",
+            "age": "Jeune apparence (plusieurs décennies/siècles)",
+            "past": "Prodige du Seireitei, devenu capitaine de la 10ᵉ division très jeune après avoir lié Hyōrinmaru.",
+            "species": "Shinigami",
+            "skills": "Manipulation de la glace, Zanjutsu, Kido, grande vitesse (Hoho)",
+            "languages": "Langage de la Soul Society",
+            "traits": "Sérieux, responsable, déterminé, parfois taciturne",
+            "goals": "Protéger la Soul Society et ses subordonnés (notamment Momo Hinamori)",
+            "inventory": [
+              "Hyōrinmaru (zanpakutō)"
+            ],
+            "level": 94,
+            "xp": 320000,
+            "location": "Seireitei — 10ᵉ Division",
+            "hp": 210,
+            "maxHp": 210,
+            "reiatsu": 380,
+            "maxReiatsu": 380,
+            "stamina": 200,
+            "maxStamina": 200,
+            "status": [
+              "Concentré"
+            ],
+            "role": "Capitaine de la 10ᵉ Division",
+            "knownBy": [
+              "Momo Hinamori",
+              "Gotei 13",
+              "Ichigo Kurosaki"
+            ],
+            "stats": {
+              "Reiatsu": 90,
+              "Endurance": 82,
+              "Hakuda": 78,
+              "Defense": 80,
+              "Hoho": 92,
+              "Intellect": 88
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, bonus Hoho"
+            ],
+            "techniques": [
+              "Shikai — Hyōrinmaru: contrôle de la glace et de l'eau",
+              "Bankai — Daiguren Hyōrinmaru: ailes et attaques glacées puissantes",
+              "Kido offensif/défensif"
+            ],
+            "description": "Jeune capitaine prodige, spécialiste des techniques glaciales et leader strict mais protecteur.",
+            "appearance": "Petit, cheveux blancs, yeux turquoise, kimono de capitaine, écharpe verte.",
+            "hidden": "Potentiel latent et évolutions du Bankai encore partiellement inconnues."
+          },
+          {
+            "name": "Kenpachi Zaraki",
+            "age": "Inconnu (plusieurs siècles)",
+            "past": "Vient du District 80 du Rukongai, où il a survécu en tant que combattant solitaire. A obtenu le titre de Kenpachi après avoir vaincu l'ancien détenteur du titre. A adopté Yachiru après leur rencontre.",
+            "species": "Shinigami",
+            "skills": "Force brute colossale, résistance extrême, instinct de combat surdéveloppé, Zanjutsu sauvage.",
+            "languages": "Langage de la Soul Society",
+            "traits": "Agressif, téméraire, franc, obsédé par le combat, charismatique malgré lui",
+            "goals": "Trouver des adversaires toujours plus forts",
+            "inventory": [
+              "Zanpakutō sans nom (non libéré)",
+              "Clochettes et cache-œil scellé"
+            ],
+            "level": 98,
+            "xp": 400000,
+            "location": "Seireitei — 11ᵉ Division",
+            "hp": 380,
+            "maxHp": 380,
+            "reiatsu": 450,
+            "maxReiatsu": 450,
+            "stamina": 350,
+            "maxStamina": 350,
+            "status": [
+              "Excité à l’idée d’un combat"
+            ],
+            "role": "Capitaine de la 11ᵉ Division",
+            "knownBy": [
+              "Yachiru Kusajishi",
+              "Ikkaku Madarame",
+              "Gotei 13"
+            ],
+            "stats": {
+              "Reiatsu": 95,
+              "Endurance": 100,
+              "Hakuda": 85,
+              "Defense": 92,
+              "Hoho": 70,
+              "Intellect": 60
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu",
+              "💥 Berserker: +30 Stamina, augmentation des dégâts quand blessé"
+            ],
+            "techniques": [
+              "Combat instinctif extrême",
+              "Libération de puissance brute en retirant son cache-œil",
+              "Techniques improvisées",
+              "Reiatsu écrasant"
+            ],
+            "description": "Capitaine brutal et passionné, cherchant constamment des adversaires dignes de lui.",
+            "appearance": "Grand, cicatrices multiples, cheveux hérissés ornés de clochettes, cache-œil en cuir.",
+            "hidden": "Puissance réelle bridée volontairement ; zanpakutō endormi depuis des siècles."
+          },
+          {
+            "name": "Mayuri Kurotsuchi",
+            "age": "Inconnu (plusieurs siècles)",
+            "past": "Scientifique brillant et cruel; a transformé et dirigé le Département de Recherche en armes et biochimie du Seireitei. Connu pour ses expériences sur hollows, shinigami et créations artificielles.",
+            "species": "Shinigami (fortement modifié cybernétiquement)",
+            "skills": "Biochimie, ingénierie spirituelle, Kido expérimental, tactiques de terrain, analyse instantanée",
+            "languages": "Langage de la Soul Society",
+            "traits": "Froid, sadique, ultralogique, excentrique, extrêmement curieux",
+            "goals": "Pousser les frontières de la science spirituelle; protéger la Soul Society par tous les moyens",
+            "inventory": [
+              "Konjiki Ashisogi Jizō (zanpakutō)",
+              "Équipements de laboratoire portables",
+              "Dispositifs toxiques et antidotes",
+              "Nemu Kurotsuchi (subordonnée artificielle)"
+            ],
+            "level": 94,
+            "xp": 330000,
+            "location": "Seireitei — 12ᵉ Division / Institut de Recherche",
+            "hp": 200,
+            "maxHp": 200,
+            "reiatsu": 360,
+            "maxReiatsu": 360,
+            "stamina": 220,
+            "maxStamina": 220,
+            "status": [
+              "Calculateur",
+              "En observation"
+            ],
+            "role": "Capitaine de la 12ᵉ Division — Directeur de l’Institut de Recherche",
+            "knownBy": [
+              "Nemu Kurotsuchi",
+              "Gotei 13",
+              "Diverses autorités scientifiques"
+            ],
+            "stats": {
+              "Reiatsu": 82,
+              "Endurance": 78,
+              "Hakuda": 70,
+              "Defense": 75,
+              "Hoho": 70,
+              "Intellect": 99
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, affinité Kido",
+              "🔧 Modifications cybernétiques: résistance accrue, outils intégrés"
+            ],
+            "techniques": [
+              "Shikai: Ashisogi Jizō — libération de toxines et paralysie ciblée",
+              "Bankai: Konjiki Ashisogi Jizō — forme augmentée avec effets biologiques complexes",
+              "Création de bio-armes et antidotes",
+              "Kido altéré et dispositifs de neutralisation"
+            ],
+            "description": "Génie-scientifique du Gotei 13, brillant mais immoral; mélange d’artificier, médecin et tortionnaire expérimental.",
+            "appearance": "Peau peinte, implants visibles, coiffure stylée, regard intense; souvent couvert d’outils et d’instruments.",
+            "hidden": "Nombreuses modifications corporelles et secrets sur ses expériences interdites; loyautés pragmatiques envers le pouvoir."
+          },
+          {
+            "name": "Jūshirō Ukitake",
+            "age": "Plusieurs siècles",
+            "past": "Originaire d’une famille du Rukongai. Élève de Yamamoto aux côtés de Shunsui Kyōraku. Devenu capitaine jeune grâce à son talent exceptionnel, malgré une maladie spirituelle chronique.",
+            "species": "Shinigami",
+            "skills": "Zanjutsu élégant, Kido avancé, maîtrise du combat à deux lames, sens tactique élevé.",
+            "languages": "Langage de la Soul Society",
+            "traits": "Gentil, calme, poli, responsable, empathique, courageux malgré sa santé fragile",
+            "goals": "Protéger ses subordonnés et maintenir la paix au Seireitei",
+            "inventory": [
+              "Sōgyo no Kotowari (zanpakutō double)",
+              "Remèdes et talismans médicaux"
+            ],
+            "level": 93,
+            "xp": 310000,
+            "location": "Seireitei — 13ᵉ Division",
+            "hp": 180,
+            "maxHp": 180,
+            "reiatsu": 420,
+            "maxReiatsu": 420,
+            "stamina": 150,
+            "maxStamina": 150,
+            "status": [
+              "Affaibli mais serein"
+            ],
+            "role": "Capitaine de la 13ᵉ Division",
+            "knownBy": [
+              "Shunsui Kyōraku",
+              "Rukia Kuchiki",
+              "Gotei 13"
+            ],
+            "stats": {
+              "Reiatsu": 92,
+              "Endurance": 60,
+              "Hakuda": 70,
+              "Defense": 75,
+              "Hoho": 78,
+              "Intellect": 95
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, affinité Kido"
+            ],
+            "techniques": [
+              "Shikai: Sōgyo no Kotowari — renvoi d’énergie et attaques spirituelles",
+              "Kido haut niveau",
+              "Double-lame synchronisée",
+              "Analyse de combat avancée"
+            ],
+            "description": "Capitaine doux et respecté, puissant malgré une santé fragile, symbole d’équilibre et de compassion dans le Gotei 13.",
+            "appearance": "Homme aux longs cheveux blancs, expression douce, kimono de capitaine ample.",
+            "hidden": "Lien spirituel secret avec un pouvoir antique influençant sa maladie."
+          }
+        ],
+        "Hollows": [
+          {
+            "name": "Grand Fisher",
+            "age": "Inconnu (ancien Hollow)",
+            "past": "Hollow prédateur célèbre pour chasser les âmes solitaires en imitant la voix de femmes humaines. Apparaît dès l'arc initial d'anime/manga.",
+            "species": "Hollow (Gigantesque, pisciforme)",
+            "skills": "Imitation vocale pour attirer victimes, embuscade, morsure puissante, grande résistance",
+            "languages": "Aucun (émissions sonores mimétiques)",
+            "traits": "Predateur patient, cruel, rusé",
+            "goals": "Se nourrir d'âmes humaines et renforcer sa domination territoriale",
+            "inventory": [],
+            "level": 40,
+            "xp": 12000,
+            "location": "Régions côtières près du Rukongai / monde des Hollows",
+            "hp": 160,
+            "maxHp": 160,
+            "reiatsu": 60,
+            "maxReiatsu": 60,
+            "stamina": 120,
+            "maxStamina": 120,
+            "status": [
+              "Ambush-ready"
+            ],
+            "role": "Antagoniste mineur / prédateur de l'arc initial",
+            "knownBy": [
+              "Ichigo Kurosaki",
+              "Isshin Kurosaki",
+              "Rukongai locals"
+            ],
+            "stats": {
+              "Reiatsu": 55,
+              "Endurance": 80,
+              "Hakuda": 70,
+              "Defense": 75,
+              "Hoho": 30,
+              "Intellect": 60
+            },
+            "raceBonuses": [
+              "🌀 Hollow: régénération spirituelle, immunité partielle aux attaques spirituelles faibles"
+            ],
+            "techniques": [
+              "Imitation vocale (leurre)",
+              "Charge vorace",
+              "Morsure déchirante"
+            ],
+            "description": "Hollow massif et rusé employant la ruse vocale pour attirer et dévorer ses proies. Rencontre clé avec Ichigo dans les premiers épisodes.",
+            "appearance": "Grande forme humanoïde-pisciforme, bouche proéminente, silhouette sombre et écailleuse.",
+            "hidden": "Tactiques d'embuscade développées — rôle narratif dans la perte personnelle d'un protagoniste."
+          }
+        ],
+        "Quincy": [
+          {
+            "name": "Uryū Ishida",
+            "age": "Environ 15 ans (au début de la série)",
+            "past": "Membre du clan Quincy, héritier de traditions ancestrales de chasse aux Hollows. Élève exemplaire avec une forte conscience du devoir familial.",
+            "species": "Quincy (humain avec pouvoirs spirituels)",
+            "skills": "Archer spirituel (Reishi manipulation), stratégie, précision extrême, connaissances sur les Hollows et l’Histoire Spirituelle",
+            "languages": "Japonais, langage spirituel pour l’analyse des Hollows",
+            "traits": "Fier, intelligent, obstiné, loyal, méthodique",
+            "goals": "Protéger les humains des Hollows, honorer l’héritage Quincy",
+            "inventory": [
+              "Arc spirituel (spiritual bow)",
+              "Flèches spirituelles"
+            ],
+            "level": 45,
+            "xp": 15000,
+            "location": "Karakura Town",
+            "hp": 150,
+            "maxHp": 150,
+            "reiatsu": 80,
+            "maxReiatsu": 80,
+            "stamina": 140,
+            "maxStamina": 140,
+            "status": [
+              "Déterminé"
+            ],
+            "role": "Allié humain / chasseur de Hollows",
+            "knownBy": [
+              "Ichigo Kurosaki",
+              "Isshin Kurosaki",
+              "Orihime Inoue"
+            ],
+            "stats": {
+              "Reiatsu": 70,
+              "Endurance": 65,
+              "Hakuda": 55,
+              "Defense": 68,
+              "Hoho": 75,
+              "Intellect": 90
+            },
+            "raceBonuses": [
+              "🏹 Quincy: +20 aux attaques spirituelles, précision accrue"
+            ],
+            "techniques": [
+              "Reishi Arrow: tir d’énergie spirituelle",
+              "Hirenkyaku: déplacement rapide",
+              "Analyse spirituelle des Hollows",
+              "Techniques de piégeage de Hollows"
+            ],
+            "description": "Jeune Quincy prodige, stratège et archer spirituel, rival et allié potentiel d’Ichigo.",
+            "appearance": "Adolescent aux cheveux noirs et lunettes, uniforme scolaire avec touches traditionnelles Quincy, arc sur le dos.",
+            "hidden": "Potentiel latent énorme, lié à son héritage Quincy et à la maîtrise future du Vollständig."
+          }
+        ],
+        "Autres": [
+          {
+            "name": "Kisuke Urahara",
+            "age": "Inconnu (plusieurs siècles)",
+            "past": "Ancien capitaine de la 12ᵉ division et fondateur du laboratoire de recherche sur les Kido et les armes spirituelles. A quitté la Soul Society pour des raisons mystérieuses, puis s’est installé à Karakura Town sous couverture de boutique de gadgets.",
+            "species": "Shinigami",
+            "skills": "Maître du Kido, du Zanjutsu, inventeur génial, stratège, grande intelligence tactique, expertise en combat et piégeage",
+            "languages": "Langage de la Soul Society, japonais courant",
+            "traits": "Mystérieux, excentrique, rusé, manipulateur subtil, profondement bienveillant",
+            "goals": "Protéger le monde humain, former Ichigo et ses amis, garder l’équilibre entre humains et Hollows",
+            "inventory": [
+              "Benihime (zanpakutō)",
+              "Gadgets spirituels",
+              "Pièges et dispositifs divers"
+            ],
+            "level": 98,
+            "xp": 500000,
+            "location": "Urahara Shop",
+            "hp": 250,
+            "maxHp": 250,
+            "reiatsu": 480,
+            "maxReiatsu": 480,
+            "attitude": "hostile",
+            "stamina": 240,
+            "maxStamina": 240,
+            "status": [
+              "Calme",
+              "Observateur"
+            ],
+            "role": "Ex-capitaine, mentor, inventeur et stratège",
+            "knownBy": [
+              "Ichigo Kurosaki",
+              "Yoruichi Shihōin",
+              "Gotei 13 (passé)"
+            ],
+            "stats": {
+              "Reiatsu": 95,
+              "Endurance": 80,
+              "Hakuda": 85,
+              "Defense": 78,
+              "Hoho": 85,
+              "Intellect": 100
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, bonus Kido et Zanjutsu"
+            ],
+            "techniques": [
+              "Shikai: Benihime — attaques énergétiques polyvalentes",
+              "Kido offensif et défensif avancé",
+              "Techniques de pièges et gadgets spirituels",
+              "Stratégies de combat et planification tactique"
+            ],
+            "description": "Ancien capitaine brillant et inventeur génial, Urahara combine intelligence, ruse et puissance spirituelle exceptionnelle.",
+            "appearance": "Homme aux cheveux blonds, chapeau de paille caractéristique, manteau vert, expression décontractée mais malicieuse.",
+            "hidden": "Ses plans et inventions cachent souvent des capacités létales et un lien profond avec l’histoire secrète de la Soul Society."
+          },
+          {
+            "name": "Tessai Tsukabishi",
+            "age": "Inconnu (plusieurs siècles)",
+            "past": "Ancien commandant/Grand Chef du Kidō Corps. Condamné pour usage de kidō interdit en aidant Urahara, il a été contraint à l’exil et vit désormais dans le Monde des Humains.",
+            "species": "Shinigami",
+            "skills": "Maîtrise absolue du Kidō (bekudō/hadō de très haut niveau, jusqu’au 99), création de barrières et sceaux sans incantation, force physique exceptionnelle, techniques de liaison et d’entrave.",
+            "languages": "Langage de la Soul Society, japonais courant",
+            "traits": "Silencieux, stoïque, protecteur, discipliné, très patient",
+            "goals": "Protéger Urahara et maintenir la boutique; veiller sur les fugitifs du Seireitei",
+            "inventory": [
+              "Shakujo (utilisé durant son mandat au Kidō Corps)",
+              "Outils et dispositifs du Urahara Shop"
+            ],
+            "level": 94,
+            "xp": 340000,
+            "location": "Urahara Shop",
+            "hp": 240,
+            "maxHp": 240,
+            "reiatsu": 380,
+            "maxReiatsu": 380,
+            "stamina": 260,
+            "maxStamina": 260,
+            "status": [
+              "Calme",
+              "Surveillance active"
+            ],
+            "role": "Ancien Chef du Kidō Corps — Assistant et garde du corps au Urahara Shop",
+            "knownBy": [
+              "Kisuke Urahara",
+              "Yoruichi Shihōin",
+              "Hachigen Ushōda",
+              "Clients du Urahara Shop"
+            ],
+            "stats": {
+              "Reiatsu": 90,
+              "Endurance": 92,
+              "Hakuda": 88,
+              "Defense": 86,
+              "Hoho": 70,
+              "Intellect": 94
+            },
+            "raceBonuses": [
+              "⚔️ Shinigami: +20 HP, +20 Reiatsu, affinité Kidō"
+            ],
+            "techniques": [
+              "Hado et Bakudō avancés (peut exécuter des bakudō de très haut niveau sans incantation)",
+              "Barrières spirituelles et sceaux de confinement",
+              "Techniques de liaison et immobilisation",
+              "Usage tactique de la force brute"
+            ],
+            "description": "Grand et massif, homme de peu de mots mais d’une loyauté indéfectible; ancien pouvoir du Kidō devenu pilier protecteur du Urahara Shop.",
+            "appearance": "Homme très grand et musclé, moustache épaisse, souvent en tablier de boutique; tatouages/spécificités visibles selon l’adaptation.",
+            "hidden": "Condamné par la Central 46 pour avoir aidé les Visoreds; son exil cache des actions héroïques et des connaissances interdites sur le Kidō."
+          }
+        ]
+      },
+      "rpTime": {
+        "date": "2024-04-01T09:00:00.000Z",
+        "tour": 1
+      }
+    }
+  },
+  "chat": [
+    {
+      "id": 1765049192054,
+      "type": "joueur",
+      "text": "wesh uryu, bien ou bien",
+      "author": "shiori",
+      "visitorName": "aoi",
+      "characterIndex": 1,
+      "turn": 2,
+      "timestamp": "2025-12-06T19:26:32.054Z"
+    },
+    {
+      "id": 1765049192060,
+      "type": "system",
+      "text": "═══════════ 🔄 TOUR 3 ═══════════",
+      "timestamp": "2025-12-06T19:26:32.060Z"
+    },
+    {
+      "id": 1765049192072,
+      "type": "narrateur",
+      "text": "🎭 **Uryū Ishida** observe shiori silencieusement.",
+      "author": "Uryū Ishida",
+      "timestamp": "2025-12-06T19:26:32.072Z"
+    },
+    {
+      "id": 1765049192933,
+      "type": "narrateur",
+      "text": "Shiori se tourne vers Uryu, un sourire léger sur les lèvres, et prononce « wesh uryu, bien ou bien ». Uryu, les yeux brillants d’une lueur d’énergie spirituelle, répond d’une voix calme, « Tout va bien, Shiori. Il suffit de garder la concentration. ». Le silence de la Tour 2 se fait plus dense, tandis qu’un léger courant d’énergie se déplace entre eux.",
+      "author": "🎭 MJ (IA)",
+      "turn": 3,
+      "timestamp": "2025-12-06T19:26:32.933Z"
+    }
+  ],
+  "oocChat": [],
+  "turnSystem": {
+    "enabled": true,
+    "currentTurn": 0,
+    "roundNumber": 3,
+    "playedThisRound": []
+  },
+  "rpTime": {
+    "date": "2024-04-01T09:15:00.000Z",
+    "tour": 3
+  }
+}}

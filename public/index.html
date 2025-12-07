@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <title>BLEACH RP – Fiches Joueurs</title>
 <link rel="stylesheet" href="/styles.css">
+<script src="/music.js"></script>
 </head>
 <body>
 <header>
@@ -350,7 +351,44 @@
     <div id="playerDetailContent"></div>
   </div>
 </div>
+<!-- ===== LECTEUR OST ===== -->
+<div id="musicPlayer">
+  <div class="music-info">
+    <span class="music-icon">🎵</span>
+    <span class="music-title" id="musicTitle">Bleach OST</span>
+  </div>
+  <div class="music-controls">
+    <input type="range" id="volumeSlider" min="0" max="100" value="30" onchange="setVolume(this.value)" />
+    <span id="volumeDisplay">30%</span>
+  </div>
+  <div class="music-playlist">
+    <select id="musicSelect" onchange="changeTrack()">
+      <option value="9xya0oO5WgA">Bleach OST - Number One</option>
+      <option value="JOHNtL9HhTE">Bleach OST - Invasion</option>
+      <option value="zO_532nbu0c">Bleach OST - Never Meant to Belong</option>
+      <option value="IvxHjs-gjB8">Bleach OST - On the Precipice of Defeat</option>
+      <option value="0kYq-E8BJgU">Bleach OST - Treachery</option>
+      <option value="k6LCykRfXL8">Bleach OST - Here to Stay</option>
+    </select>
+  </div>
+</div>
 
+<!-- Overlay de démarrage (requis par les navigateurs) -->
+<div id="musicStartOverlay" onclick="startMusic()">
+  <div class="start-music-prompt">
+    <span>🎵</span>
+    <p>Cliquez pour activer la musique</p>
+    <small>Bleach OST</small>
+  </div>
+</div>
+
+<!-- Conteneur YouTube caché -->
+<div id="youtubeContainer" style="position:absolute; left:-9999px; top:-9999px;">
+  <div id="youtubePlayer"></div>
+</div>
+
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 // ===== VARIABLES GLOBALES =====
 let socket;
