@@ -5,10 +5,24 @@ let currentVolume = 30;
 
 // Playlist de vidéos YouTube (IDs)
 const playlist = [
+    { id: 'IvxHjs-gjB8', title: 'On the Precipice of Defeat' },
+    { id: 'f4MmKTOzCEw', title: 'Comical World' },
+    { id: 'JjWSuWKkWmg', title: 'Oh So Tired' },
+    { id: 'K-4VtZO1a7g', title: 'Head in The Clouds' },
+    {id: 'C7NJ7IaGjYM', title: 'Ditty for Daddy' },
+    {id: 'iILgLk0D0gY', title: 'Creeping Shadows' },
+    {id: 'TbzvVErq2Ic', title: 'Raw Breath Of Danger' },
+    {id: 'k8R7cs7FnFw', title: 'Enemy Unseen' },
+    {id: '7Jb0NP7dEk8', title: 'Will Of The Heart' },
+    {id: '-LeWJ-5rbM8', title: 'Requiem For The Lost Ones' },
+    {id: '_ZkGda9q6ZE', title: 'Nothing Can Be Explained' },
+    {id: 'Mn6WrMGWgbs', title: 'Burden of the Past' },
+    {id: 'v-LwlsDa_hU', title: 'Destiny Awaits' },
+    {id: 'DVbZFY6HVMs', title: 'Catch-22' },
+    {id: 'eqUE1Uq7JvU', title: 'Heat of the Battle' },
   { id: '9xya0oO5WgA', title: 'Bleach OST - Number One' },
   { id: 'JOHNtL9HhTE', title: 'Bleach OST - Invasion' },
   { id: 'zO_532nbu0c', title: 'Bleach OST - Never Meant to Belong' },
-  { id: 'IvxHjs-gjB8', title: 'Bleach OST - On the Precipice of Defeat' },
   { id: '0kYq-E8BJgU', title: 'Bleach OST - Treachery' },
   { id: 'k6LCykRfXL8', title: 'Bleach OST - Here to Stay' }
 ];

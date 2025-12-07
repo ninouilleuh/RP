@@ -1033,12 +1033,44 @@
       "author": "🎭 MJ (IA)",
       "turn": 3,
       "timestamp": "2025-12-06T19:26:32.933Z"
+    },
+    {
+      "id": 1765126222078,
+      "type": "joueur",
+      "text": "okok",
+      "author": "AoiOFFLINE",
+      "visitorName": "aoi",
+      "characterIndex": 0,
+      "turn": 3,
+      "timestamp": "2025-12-07T16:50:22.078Z"
+    },
+    {
+      "id": 1765126222342,
+      "type": "narrateur",
+      "text": "🎭 **Kisuke Urahara** regarde AoiOFFLINE avec hostilité, prêt à attaquer.",
+      "author": "Kisuke Urahara",
+      "timestamp": "2025-12-07T16:50:22.342Z"
+    },
+    {
+      "id": 1765126223142,
+      "type": "narrateur",
+      "text": "Lumières tamisées et senteurs d’herbes exotiques envahissent le troisième étage du magasin d’Urahara, où des étagères débordent d’objets mystérieux. Urahara, toujours discret, observe AoiOFFLINE d’un œil perçant, un sourire énigmatique aux coins de lèvres. En réponse à ton « okok », il tend un petit coffret en bois, gravé de runes anciennes, qui vibra légèrement de pouvoir latent. Le coffre s’ouvre, révélant un fragment d’éclat de Fullbringer qui s’injecte dans tes sens, augmentant subtilement ton potentiel.",
+      "author": "🎭 MJ (IA)",
+      "turn": 3,
+      "timestamp": "2025-12-07T16:50:23.142Z"
+    },
+    {
+      "id": 1765126223146,
+      "type": "narrateur",
+      "text": "🎭 **Tessai Tsukabishi** observe AoiOFFLINE silencieusement.",
+      "author": "Tessai Tsukabishi",
+      "timestamp": "2025-12-07T16:50:23.146Z"
     }
   ],
   "oocChat": [],
   "turnSystem": {
     "enabled": true,
-    "currentTurn": 0,
+    "currentTurn": 1,
     "roundNumber": 3,
     "playedThisRound": []
   },
